@@ -14,7 +14,7 @@ export function Inspector() {
   const members = useKernel((s) => s.members)
   const close = useKernel((s) => s.openInspector)
   const updateRecord = useKernel((s) => s.updateRecord)
-  const owner = useMember(field(record ?? { fields: {} } as never, 'ownerId', ''))
+  const owner = useMember(record ? field(record, 'ownerId', '') : '')
 
   if (!record) return null
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
@@ -12,9 +13,9 @@ export function DocsModule() {
   const navigate = useNavigate()
   const active = docs.find((d) => d.id === docId) ?? docs[0]
 
-  if (active && !docId) {
-    navigate(`/docs/${active.id}`, { replace: true })
-  }
+  useEffect(() => {
+    if (active && !docId) navigate(`/docs/${active.id}`, { replace: true })
+  }, [active, docId, navigate])
 
   return (
     <div className="flex h-full min-h-0">

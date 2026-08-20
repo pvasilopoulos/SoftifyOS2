@@ -6,16 +6,16 @@ const day = 86_400_000
 const hour = 3_600_000
 
 export const ORG: Org = {
-  id: 'org_helix',
-  name: 'Helix Partners',
+  id: 'org_softify',
+  name: 'Softify',
   plan: 'Studio',
 }
 
 export const MEMBERS: Member[] = [
   {
     id: 'user_panos',
-    name: 'Παναγιώτης Βασιλόπουλος',
-    email: 'panos@helix.studio',
+    name: 'Πρόδρομος Βασιλόπουλος',
+    email: 'info@softify.gr',
     role: 'Founder',
     hue: 250,
   },

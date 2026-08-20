@@ -71,9 +71,12 @@ export const TASK_STATUSES: TaskStatus[] = [
   'done',
 ]
 
-export function field<T>(record: SoftifyRecord, key: string, fallback: T): T {
+export function field(record: SoftifyRecord, key: string, fallback: string): string
+export function field(record: SoftifyRecord, key: string, fallback: number): number
+export function field<T>(record: SoftifyRecord, key: string, fallback: T): T
+export function field(record: SoftifyRecord, key: string, fallback: unknown) {
   const value = record.fields[key]
-  return (value as T | undefined) ?? fallback
+  return value ?? fallback
 }
 
 export function relatedIds(record: SoftifyRecord, kind: RelationKind) {

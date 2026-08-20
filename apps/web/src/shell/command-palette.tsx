@@ -25,6 +25,14 @@ const creates: { type: RecordType; key: keyof ReturnType<typeof useT>['create'] 
   { type: 'doc', key: 'doc' },
 ]
 
+interface PaletteItem {
+  id: string
+  group: string
+  label: string
+  hint?: string
+  run: () => void
+}
+
 export function CommandPalette() {
   const t = useT()
   const open = useKernel((s) => s.ui.commandOpen)
@@ -38,7 +46,7 @@ export function CommandPalette() {
 
   const items = useMemo(() => {
     const query = q.trim().toLowerCase()
-    const navItems = nav
+    const navItems: PaletteItem[] = nav
       .filter((item) => t.nav[item.key].toLowerCase().includes(query) || !query)
       .map((item) => ({
         id: `nav:${item.to}`,
@@ -46,7 +54,7 @@ export function CommandPalette() {
         label: t.nav[item.key],
         run: () => navigate(item.to),
       }))
-    const createItems = creates
+    const createItems: PaletteItem[] = creates
       .filter((item) => String(t.create[item.key]).toLowerCase().includes(query) || !query)
       .map((item) => ({
         id: `create:${item.type}`,
@@ -54,7 +62,7 @@ export function CommandPalette() {
         label: String(t.create[item.key]),
         run: () => setCreateType(item.type),
       }))
-    const recordItems = records
+    const recordItems: PaletteItem[] = records
       .filter((record) => ['deal', 'company', 'contact', 'project', 'task', 'doc'].includes(record.type))
       .filter((record) => !query || record.title.toLowerCase().includes(query))
       .slice(0, 8)
@@ -147,7 +155,7 @@ export function CommandPalette() {
                   </span>
                   {item.label}
                 </span>
-                {'hint' in item && item.hint ? (
+                {item.hint ? (
                   <span className="text-xs text-faint">{item.hint}</span>
                 ) : null}
               </button>

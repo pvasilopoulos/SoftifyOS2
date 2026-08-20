@@ -11,7 +11,9 @@ export function SettingsModule() {
   const setTheme = useKernel((s) => s.setTheme)
   const setLocale = useKernel((s) => s.setLocale)
   const setDensity = useKernel((s) => s.setDensity)
+  const setMultitabs = useKernel((s) => s.setMultitabs)
   const resetDemo = useKernel((s) => s.resetDemo)
+  const logout = useKernel((s) => s.logout)
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-6">
@@ -52,6 +54,29 @@ export function SettingsModule() {
               {t.settings[density]}
             </button>
           ))}
+        </div>
+        <h2 className="mt-6 text-sm font-semibold">{t.settings.multitabs}</h2>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMultitabs(false)}
+            className={cn(
+              'rounded-xl border px-3 py-2 text-sm',
+              !ui.multitabs ? 'border-accent bg-accent/10' : 'border-line',
+            )}
+          >
+            {t.settings.off}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMultitabs(true)}
+            className={cn(
+              'rounded-xl border px-3 py-2 text-sm',
+              ui.multitabs ? 'border-accent bg-accent/10' : 'border-line',
+            )}
+          >
+            {t.settings.multitabs}
+          </button>
         </div>
         <h2 className="mt-6 text-sm font-semibold">{t.settings.language}</h2>
         <div className="mt-3 flex gap-2">
@@ -97,18 +122,30 @@ export function SettingsModule() {
             Copilot <Kbd>⌘J</Kbd>
           </li>
           <li className="flex justify-between">
+            {t.settings.newTab} <Kbd>⌘T</Kbd>
+          </li>
+          <li className="flex justify-between">
             Close <Kbd>Esc</Kbd>
           </li>
         </ul>
       </Surface>
 
-      <button
-        type="button"
-        onClick={resetDemo}
-        className="rounded-xl border border-line px-3 py-2 text-sm text-muted hover:border-danger hover:text-danger"
-      >
-        {t.settings.reset}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={resetDemo}
+          className="rounded-xl border border-line px-3 py-2 text-sm text-muted hover:border-danger hover:text-danger"
+        >
+          {t.settings.reset}
+        </button>
+        <button
+          type="button"
+          onClick={logout}
+          className="rounded-xl border border-line px-3 py-2 text-sm text-muted hover:text-ink"
+        >
+          {t.logout}
+        </button>
+      </div>
     </div>
   )
 }

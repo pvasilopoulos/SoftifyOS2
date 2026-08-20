@@ -8,11 +8,13 @@ import {
   Settings,
   SquareKanban,
 } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import type { MouseEvent } from 'react'
 import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
 import { cn } from '@/lib/format'
 import { Logo } from '@/ui/primitives'
+import { skipNextTabSync } from './tab-bar'
 
 const items = [
   { to: '/', icon: Home, key: 'home' as const, end: true },
@@ -26,9 +28,21 @@ const items = [
 
 export function Dock() {
   const t = useT()
+  const navigate = useNavigate()
+  const openTab = useKernel((s) => s.openTab)
+  const multitabs = useKernel((s) => s.ui.multitabs)
   const unread = useKernel(
     (s) => s.records.filter((r) => r.type === 'inbox' && r.fields.read === false).length,
   )
+
+  function onModuleClick(event: MouseEvent, to: string) {
+    if (multitabs && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault()
+      skipNextTabSync()
+      openTab(to)
+      navigate(to)
+    }
+  }
 
   return (
     <aside className="flex w-[72px] shrink-0 flex-col items-center border-r border-line bg-bg/80 py-3">
@@ -40,6 +54,7 @@ export function Dock() {
             to={item.to}
             end={item.end}
             title={t.nav[item.key]}
+            onClick={(event) => onModuleClick(event, item.to)}
             className={({ isActive }) =>
               cn(
                 'relative grid size-10 place-items-center rounded-xl text-muted transition hover:bg-bg-2 hover:text-ink',
@@ -57,6 +72,7 @@ export function Dock() {
       <NavLink
         to="/settings"
         title={t.nav.settings}
+        onClick={(event) => onModuleClick(event, '/settings')}
         className={({ isActive }) =>
           cn(
             'grid size-10 place-items-center rounded-xl text-muted hover:bg-bg-2 hover:text-ink',
