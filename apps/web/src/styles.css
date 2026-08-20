@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --color-bg: var(--bg);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-ai: var(--ai);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0c10;
+  --bg-1: #12141a;
+  --bg-2: #181b22;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --ink: #f4f1ea;
+  --muted: #a8a29e;
+  --faint: #6e6a66;
+  --accent: #8aa2ff;
+  --accent-2: #c9d4ff;
+  --ai: #c4a6ff;
+  --ok: #7dcca0;
+  --warn: #e6c07b;
+  --danger: #f0a0a0;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --noise: 0.035;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f0ea;
+  --bg-1: #fffdf8;
+  --bg-2: #ece7de;
+  --line: rgba(28, 25, 23, 0.08);
+  --line-strong: rgba(28, 25, 23, 0.14);
+  --ink: #161412;
+  --muted: #6b645c;
+  --faint: #9a938a;
+  --accent: #3d5afe;
+  --accent-2: #1e3a8a;
+  --ai: #7c3aed;
+  --ok: #0f7a4a;
+  --warn: #b45309;
+  --danger: #b42318;
+  --shadow: 0 24px 60px rgba(40, 32, 20, 0.12);
+  --noise: 0.04;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--ink);
+  letter-spacing: -0.011em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: var(--noise);
+  z-index: 80;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, white);
+  outline-offset: 2px;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+[data-density="compact"] {
+  --row: 32px;
+  --pad: 10px;
+}
+
+[data-density="comfortable"] {
+  --row: 40px;
+  --pad: 14px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.rise {
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.fade {
+  animation: fade 0.4s ease both;
+}

@@ -1,0 +1,15 @@
+{
+  "name": "softifyos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SoftifyOS — the operating system for your company",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview",
+    "lint": "pnpm --filter web lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
