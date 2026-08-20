@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { api, getToken, setToken } from '@/kernel/api'
 import { uid } from '@/lib/format'
-import { verifyLogin } from './auth'
 import { CURRENT_USER_ID, DEMO_RECORDS, MEMBERS, ORG } from './demo-data'
 import type {
   Density,
+  Design,
   Locale,
   Member,
   Org,
@@ -31,17 +32,33 @@ export interface UiState {
   multitabs: boolean
 }
 
+interface Bootstrap {
+  user: Member & { orgId: string }
+  org: Org
+  members: Member[]
+  records: SoftifyRecord[]
+  layouts: Design[]
+  views: Design[]
+  forms: Design[]
+}
+
 interface KernelState {
   authenticated: boolean
+  hydrating: boolean
   org: Org
   members: Member[]
   currentUserId: string
   records: SoftifyRecord[]
+  layouts: Design[]
+  views: Design[]
+  forms: Design[]
+  activeViews: Record<string, string>
   tabs: WorkspaceTab[]
   activeTabId: string
   ui: UiState
-  login: (username: string, password: string) => boolean
+  login: (username: string, password: string) => Promise<boolean>
   logout: () => void
+  hydrate: () => Promise<boolean>
   boot: () => void
   setTheme: (theme: Theme) => void
   setLocale: (locale: Locale) => void
@@ -52,6 +69,7 @@ interface KernelState {
   toggleAi: () => void
   openInspector: (id: string | null) => void
   setCreateType: (type: RecordType | null) => void
+  setActiveView: (moduleId: string, viewId: string) => void
   openTab: (path: string) => void
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
@@ -64,6 +82,8 @@ interface KernelState {
   }) => SoftifyRecord
   updateRecord: (id: string, patch: Partial<Pick<SoftifyRecord, 'title' | 'fields'>>) => void
   patchFields: (id: string, fields: Record<string, unknown>) => void
+  saveDesign: (table: 'layouts' | 'views' | 'forms', item: Partial<Design> & { schema: Record<string, unknown> }) => Promise<Design>
+  deleteDesign: (table: 'layouts' | 'views' | 'forms', id: string) => Promise<void>
   resetDemo: () => void
 }
 
@@ -85,33 +105,87 @@ const defaultUi: UiState = {
   multitabs: false,
 }
 
+function applyBootstrap(data: Bootstrap) {
+  const activeViews: Record<string, string> = {}
+  for (const view of data.views) {
+    if (view.isDefault) activeViews[view.moduleId] = view.id
+  }
+  return {
+    authenticated: true,
+    org: data.org,
+    members: data.members,
+    currentUserId: data.user.id,
+    records: data.records,
+    layouts: data.layouts,
+    views: data.views,
+    forms: data.forms,
+    activeViews,
+  }
+}
+
 export const useKernel = create<KernelState>()(
   persist(
     (set, get) => ({
       authenticated: false,
+      hydrating: Boolean(getToken()),
       org: ORG,
       members: MEMBERS,
       currentUserId: CURRENT_USER_ID,
       records: DEMO_RECORDS,
+      layouts: [],
+      views: [],
+      forms: [],
+      activeViews: {},
       tabs: [firstTab],
       activeTabId: firstTab.id,
       ui: defaultUi,
-      login: (username, password) => {
-        if (!verifyLogin(username, password)) return false
-        const tab = newTab('/')
-        set((s) => ({
-          authenticated: true,
-          tabs: [tab],
-          activeTabId: tab.id,
-          ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
-        }))
-        return true
+      login: async (username, password) => {
+        try {
+          const data = await api<{ token: string }>('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password }),
+          })
+          setToken(data.token)
+          const boot = await api<Bootstrap>('/api/bootstrap')
+          const tab = newTab('/')
+          set((s) => ({
+            ...applyBootstrap(boot),
+            hydrating: false,
+            tabs: [tab],
+            activeTabId: tab.id,
+            ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
+          }))
+          return true
+        } catch {
+          setToken(null)
+          return false
+        }
       },
-      logout: () =>
+      logout: () => {
+        const token = getToken()
+        if (token) void api('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
+        setToken(null)
         set((s) => ({
           authenticated: false,
+          hydrating: false,
           ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
-        })),
+        }))
+      },
+      hydrate: async () => {
+        if (!getToken()) {
+          set({ hydrating: false, authenticated: false })
+          return false
+        }
+        try {
+          const boot = await api<Bootstrap>('/api/bootstrap')
+          set({ ...applyBootstrap(boot), hydrating: false })
+          return true
+        } catch {
+          setToken(null)
+          set({ hydrating: false, authenticated: false })
+          return false
+        }
+      },
       boot: () => set((s) => ({ ui: { ...s.ui, booted: true } })),
       setTheme: (theme) => set((s) => ({ ui: { ...s.ui, theme } })),
       setLocale: (locale) => set((s) => ({ ui: { ...s.ui, locale } })),
@@ -130,6 +204,8 @@ export const useKernel = create<KernelState>()(
       toggleAi: () => set((s) => ({ ui: { ...s.ui, aiOpen: !s.ui.aiOpen } })),
       openInspector: (inspectorId) => set((s) => ({ ui: { ...s.ui, inspectorId } })),
       setCreateType: (createType) => set((s) => ({ ui: { ...s.ui, createType } })),
+      setActiveView: (moduleId, viewId) =>
+        set((s) => ({ activeViews: { ...s.activeViews, [moduleId]: viewId } })),
       openTab: (path) => {
         const tab = newTab(path)
         set((s) => ({ tabs: [...s.tabs, tab], activeTabId: tab.id }))
@@ -138,8 +214,7 @@ export const useKernel = create<KernelState>()(
         set((s) => {
           const remaining = s.tabs.filter((tab) => tab.id !== id)
           const tabs = remaining.length ? remaining : [newTab('/')]
-          const activeTabId =
-            s.activeTabId === id ? tabs[tabs.length - 1]!.id : s.activeTabId
+          const activeTabId = s.activeTabId === id ? tabs[tabs.length - 1]!.id : s.activeTabId
           return { tabs, activeTabId }
         }),
       setActiveTab: (activeTabId) => set({ activeTabId }),
@@ -161,9 +236,20 @@ export const useKernel = create<KernelState>()(
           records: [record, ...s.records],
           ui: { ...s.ui, createType: null, inspectorId: record.id },
         }))
+        void api<{ record: SoftifyRecord }>('/api/records', {
+          method: 'POST',
+          body: JSON.stringify(record),
+        })
+          .then((data) =>
+            set((s) => ({
+              records: s.records.map((item) => (item.id === record.id ? data.record : item)),
+              ui: { ...s.ui, inspectorId: data.record.id },
+            })),
+          )
+          .catch(() => undefined)
         return record
       },
-      updateRecord: (id, patch) =>
+      updateRecord: (id, patch) => {
         set((s) => ({
           records: s.records.map((record) =>
             record.id === id
@@ -175,20 +261,45 @@ export const useKernel = create<KernelState>()(
                 }
               : record,
           ),
-        })),
+        }))
+        const current = get().records.find((record) => record.id === id)
+        void api(`/api/records/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ title: current?.title, fields: patch.fields ?? current?.fields }),
+        }).catch(() => undefined)
+      },
       patchFields: (id, fields) => get().updateRecord(id, { fields }),
-      resetDemo: () =>
-        set({
-          records: DEMO_RECORDS,
-          ui: { ...get().ui, inspectorId: null, createType: null },
-        }),
+      saveDesign: async (table, item) => {
+        const path = item.id ? `/api/${table}/${item.id}` : `/api/${table}`
+        const data = await api<{ item: Design }>(path, {
+          method: item.id ? 'PATCH' : 'POST',
+          body: JSON.stringify({
+            id: item.id,
+            name: item.name,
+            moduleId: item.moduleId,
+            objectType: item.objectType,
+            kind: item.kind,
+            isDefault: item.isDefault,
+            schema: item.schema,
+          }),
+        })
+        set((s) => {
+          const list = s[table]
+          const exists = list.some((row) => row.id === data.item.id)
+          return { [table]: exists ? list.map((row) => (row.id === data.item.id ? data.item : row)) : [data.item, ...list] }
+        })
+        return data.item
+      },
+      deleteDesign: async (table, id) => {
+        await api(`/api/${table}/${id}`, { method: 'DELETE' })
+        set((s) => ({ [table]: s[table].filter((row) => row.id !== id) }))
+      },
+      resetDemo: () => void get().hydrate(),
     }),
     {
       name: 'softifyos-kernel',
-      version: 2,
+      version: 3,
       partialize: (state) => ({
-        authenticated: state.authenticated,
-        records: state.records,
         ui: {
           theme: state.ui.theme,
           locale: state.ui.locale,
@@ -199,15 +310,12 @@ export const useKernel = create<KernelState>()(
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<KernelState> | undefined
-        const authenticated = p?.authenticated ?? false
         return {
           ...current,
-          authenticated,
-          records: p?.records ?? current.records,
           ui: {
             ...current.ui,
             ...(p?.ui ?? {}),
-            booted: authenticated,
+            booted: false,
             commandOpen: false,
             inspectorId: null,
             createType: null,
@@ -233,5 +341,5 @@ export function useMember(id: string | undefined | null) {
 }
 
 export function useCurrentUser() {
-  return useKernel((s) => s.members.find((member) => member.id === s.currentUserId)!)
+  return useKernel((s) => s.members.find((member) => member.id === s.currentUserId) ?? s.members[0]!)
 }

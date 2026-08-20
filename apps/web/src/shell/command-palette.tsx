@@ -13,6 +13,7 @@ const nav = [
   { to: '/docs', key: 'docs' as const },
   { to: '/calendar', key: 'calendar' as const },
   { to: '/insights', key: 'insights' as const },
+  { to: '/studio', key: 'studio' as const },
   { to: '/settings', key: 'settings' as const },
 ]
 

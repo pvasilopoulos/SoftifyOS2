@@ -13,6 +13,7 @@ const titles: Record<string, keyof ReturnType<typeof useT>['nav']> = {
   '/docs': 'docs',
   '/calendar': 'calendar',
   '/insights': 'insights',
+  '/studio': 'studio',
   '/settings': 'settings',
 }
 

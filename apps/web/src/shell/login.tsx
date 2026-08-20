@@ -9,6 +9,7 @@ export function LoginScreen() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   return (
     <div className="grid h-full place-items-center px-6">
@@ -16,9 +17,12 @@ export function LoginScreen() {
         className="rise w-full max-w-[400px]"
         onSubmit={(event) => {
           event.preventDefault()
-          const ok = login(username, password)
-          setError(!ok)
-          if (!ok) setPassword('')
+          setBusy(true)
+          void login(username, password).then((ok) => {
+            setBusy(false)
+            setError(!ok)
+            if (!ok) setPassword('')
+          })
         }}
       >
         <div className="mb-8 flex flex-col items-center text-center">
@@ -56,7 +60,8 @@ export function LoginScreen() {
           {error ? <p className="mt-3 text-sm text-danger">{t.login.error}</p> : null}
           <button
             type="submit"
-            className="mt-5 h-11 w-full rounded-xl bg-accent text-sm font-semibold text-bg"
+            disabled={busy}
+            className="mt-5 h-11 w-full rounded-xl bg-accent text-sm font-semibold text-bg disabled:opacity-60"
           >
             {t.login.submit}
           </button>

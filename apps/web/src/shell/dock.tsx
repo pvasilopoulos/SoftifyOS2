@@ -5,6 +5,7 @@ import {
   Home,
   Inbox,
   LayoutDashboard,
+  PenTool,
   Settings,
   SquareKanban,
 } from 'lucide-react'
@@ -24,6 +25,7 @@ const items = [
   { to: '/docs', icon: FileText, key: 'docs' as const },
   { to: '/calendar', icon: CalendarDays, key: 'calendar' as const },
   { to: '/insights', icon: LayoutDashboard, key: 'insights' as const },
+  { to: '/studio', icon: PenTool, key: 'studio' as const },
 ]
 
 export function Dock() {

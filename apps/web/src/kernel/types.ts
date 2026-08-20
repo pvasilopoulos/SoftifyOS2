@@ -55,6 +55,17 @@ export interface Org {
   plan: string
 }
 
+export interface Design {
+  id: string
+  moduleId: string
+  name: string
+  objectType: string | null
+  kind: string | null
+  isSystem: boolean
+  isDefault: boolean
+  schema: Record<string, unknown>
+}
+
 export const DEAL_STAGES: DealStage[] = [
   'lead',
   'qualified',

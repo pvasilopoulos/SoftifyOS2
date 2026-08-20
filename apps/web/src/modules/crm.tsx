@@ -5,9 +5,14 @@ import { DEAL_STAGES, field } from '@/kernel/types'
 import { cn, formatCurrency, formatDate } from '@/lib/format'
 import { Kanban } from '@/ui/kanban'
 import { Avatar, Badge, Surface } from '@/ui/primitives'
+import { ViewCanvas } from '@/ui/view-canvas'
 
 export function CrmLayout() {
   const t = useT()
+  const views = useKernel((s) => s.views.filter((view) => view.moduleId === 'crm'))
+  const activeId = useKernel((s) => s.activeViews.crm)
+  const setActiveView = useKernel((s) => s.setActiveView)
+  const view = views.find((item) => item.id === activeId) ?? views[0]
   const tabs = [
     { to: '/crm', label: t.crm.pipeline, end: true },
     { to: '/crm/companies', label: t.crm.companies },
@@ -15,26 +20,41 @@ export function CrmLayout() {
   ]
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex gap-1 px-6 pt-4">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            end={tab.end}
-            className={({ isActive }) =>
-              cn(
-                'rounded-full px-3 py-1.5 text-sm text-muted hover:text-ink',
-                isActive && 'bg-bg-2 text-ink',
-              )
-            }
-          >
-            {tab.label}
-          </NavLink>
-        ))}
+      <div className="flex flex-wrap items-center gap-1 px-6 pt-4">
+        {views.length
+          ? views.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setActiveView('crm', item.id)}
+                className={cn(
+                  'rounded-full px-3 py-1.5 text-sm text-muted hover:text-ink',
+                  view?.id === item.id && 'bg-bg-2 text-ink',
+                )}
+              >
+                {item.name}
+              </button>
+            ))
+          : tabs.map((tab) => (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                end={tab.end}
+                className={({ isActive }) =>
+                  cn(
+                    'rounded-full px-3 py-1.5 text-sm text-muted hover:text-ink',
+                    isActive && 'bg-bg-2 text-ink',
+                  )
+                }
+              >
+                {tab.label}
+              </NavLink>
+            ))}
+        <NavLink to="/studio/views" className="ml-auto text-xs text-accent hover:underline">
+          Studio
+        </NavLink>
       </div>
-      <div className="min-h-0 flex-1 p-4">
-        <Outlet />
-      </div>
+      <div className="min-h-0 flex-1 p-4">{view ? <ViewCanvas view={view} /> : <Outlet />}</div>
     </div>
   )
 }
