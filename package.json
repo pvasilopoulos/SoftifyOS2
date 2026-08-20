@@ -1,0 +1,17 @@
+{
+  "name": "softifyos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SoftifyOS — the operating system for your company",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "dev:api": "php -S 0.0.0.0:8080 -t apps/api/public apps/api/public/router.php",
+    "db:install": "sudo mysql < apps/api/schema/install.sql && php apps/api/schema/seed.php",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview",
+    "lint": "pnpm --filter web lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
