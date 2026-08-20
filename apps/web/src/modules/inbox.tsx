@@ -18,7 +18,7 @@ export function InboxModule() {
     .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="mx-auto max-w-3xl p-4 md:p-6">
       <div className="mb-4 flex gap-1">
         {(['all', 'unread'] as const).map((key) => (
           <button

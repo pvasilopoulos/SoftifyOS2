@@ -1,14 +1,14 @@
 import { useEffect } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import { useT } from '@/i18n'
-import { useKernel } from '@/kernel/store'
+import { useKernel, useRecords } from '@/kernel/store'
 import { field } from '@/kernel/types'
 import { cn } from '@/lib/format'
 
 export function DocsModule() {
   const t = useT()
   const { docId } = useParams()
-  const docs = useKernel((s) => s.records.filter((r) => r.type === 'doc'))
+  const docs = useRecords('doc')
   const updateRecord = useKernel((s) => s.updateRecord)
   const navigate = useNavigate()
   const active = docs.find((d) => d.id === docId) ?? docs[0]
@@ -18,8 +18,21 @@ export function DocsModule() {
   }, [active, docId, navigate])
 
   return (
-    <div className="flex h-full min-h-0">
-      <aside className="w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin">
+    <div className="flex h-full min-h-0 flex-col md:flex-row">
+      <div className="flex gap-1 overflow-x-auto border-b border-line p-2 scrollbar-thin md:hidden">
+        {docs.map((doc) => (
+          <NavLink
+            key={doc.id}
+            to={`/docs/${doc.id}`}
+            className={({ isActive }) =>
+              cn('shrink-0 rounded-full px-3 py-1.5 text-sm', isActive && 'bg-bg-2 font-medium')
+            }
+          >
+            {field(doc, 'emoji', '◈')} {doc.title}
+          </NavLink>
+        ))}
+      </div>
+      <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin md:block">
         {docs.map((doc) => (
           <NavLink
             key={doc.id}
@@ -34,12 +47,12 @@ export function DocsModule() {
         ))}
       </aside>
       {active ? (
-        <article className="mx-auto w-full max-w-2xl overflow-y-auto px-10 py-10 scrollbar-thin">
+        <article className="mx-auto w-full max-w-2xl overflow-y-auto px-4 py-6 scrollbar-thin md:px-10 md:py-10">
           <div className="text-4xl">{field(active, 'emoji', '◈')}</div>
           <input
             value={active.title}
             onChange={(e) => updateRecord(active.id, { title: e.target.value })}
-            className="mt-4 w-full bg-transparent font-serif text-4xl tracking-tight outline-none"
+            className="mt-4 w-full bg-transparent text-3xl font-semibold tracking-tight outline-none md:text-4xl"
           />
           <p className="mt-2 text-sm text-faint">{t.docs.hint}</p>
           <textarea

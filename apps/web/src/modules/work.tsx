@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { NavLink, Outlet, useParams } from 'react-router-dom'
 import { useT } from '@/i18n'
-import { useKernel } from '@/kernel/store'
+import { useKernel, useRecords } from '@/kernel/store'
 import { TASK_STATUSES, field } from '@/kernel/types'
 import { cn, formatDate } from '@/lib/format'
 import { Kanban } from '@/ui/kanban'
@@ -9,49 +9,65 @@ import { Avatar, Badge, Surface } from '@/ui/primitives'
 
 export function WorkLayout() {
   const t = useT()
-  const projects = useKernel((s) => s.records.filter((r) => r.type === 'project'))
-  const tasks = useKernel((s) => s.records.filter((r) => r.type === 'task'))
+  const projects = useRecords('project')
+  const tasks = useRecords('task')
+  const links = [
+    { to: '/work', title: t.work.all, color: null as string | null, meta: '', end: true },
+    ...projects.map((project) => {
+      const pts = tasks.filter((task) => task.relations.some((rel) => rel.id === project.id))
+      const done = pts.filter((task) => field(task, 'status', '') === 'done').length
+      return {
+        to: `/work/${project.id}`,
+        title: project.title,
+        color: field(project, 'color', '#8aa2ff'),
+        meta: `${done}/${pts.length}`,
+        end: false,
+      }
+    }),
+  ]
   return (
-    <div className="flex h-full min-h-0">
-      <aside className="w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin">
+    <div className="flex h-full min-h-0 flex-col md:flex-row">
+      <div className="flex gap-1 overflow-x-auto border-b border-line p-2 scrollbar-thin md:hidden">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.end}
+            className={({ isActive }) =>
+              cn(
+                'shrink-0 rounded-full px-3 py-1.5 text-sm',
+                isActive ? 'bg-bg-2 font-medium' : 'text-muted',
+              )
+            }
+          >
+            {link.title}
+          </NavLink>
+        ))}
+      </div>
+      <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin md:block">
         <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
           {t.work.projects}
         </div>
-        <NavLink
-          to="/work"
-          end
-          className={({ isActive }) =>
-            cn('mb-1 block rounded-xl px-3 py-2 text-sm', isActive ? 'bg-bg-2 font-medium' : 'text-muted hover:text-ink')
-          }
-        >
-          {t.work.all}
-        </NavLink>
-        {projects.map((project) => {
-          const pts = tasks.filter((task) => task.relations.some((rel) => rel.id === project.id))
-          const done = pts.filter((task) => field(task, 'status', '') === 'done').length
-          return (
-            <NavLink
-              key={project.id}
-              to={`/work/${project.id}`}
-              className={({ isActive }) =>
-                cn('mb-1 block rounded-xl px-3 py-2 text-sm', isActive ? 'bg-bg-2 font-medium' : 'hover:bg-bg-2/70')
-              }
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="size-2 rounded-full"
-                  style={{ background: field(project, 'color', '#8aa2ff') }}
-                />
-                <span className="truncate">{project.title}</span>
-              </div>
-              <div className="mt-1 pl-4 text-[11px] text-faint">
-                {done}/{pts.length}
-              </div>
-            </NavLink>
-          )
-        })}
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            end={link.end}
+            className={({ isActive }) =>
+              cn('mb-1 block rounded-xl px-3 py-2 text-sm', isActive ? 'bg-bg-2 font-medium' : 'text-muted hover:text-ink')
+            }
+          >
+            <div className="flex items-center gap-2">
+              {link.color ? (
+                <span className="size-2 rounded-full" style={{ background: link.color }} />
+              ) : null}
+              <span className="truncate">{link.title}</span>
+            </div>
+            {link.meta ? <div className="mt-1 pl-4 text-[11px] text-faint">{link.meta}</div> : null}
+          </NavLink>
+        ))}
       </aside>
-      <div className="min-w-0 flex-1 p-4">
+      <div className="min-w-0 flex-1 p-3 md:p-4">
         <Outlet />
       </div>
     </div>
@@ -136,8 +152,8 @@ export function WorkBoard() {
 export function WorkProjects() {
   const t = useT()
   const locale = useKernel((s) => s.ui.locale)
-  const projects = useKernel((s) => s.records.filter((r) => r.type === 'project'))
-  const tasks = useKernel((s) => s.records.filter((r) => r.type === 'task'))
+  const projects = useRecords('project')
+  const tasks = useRecords('task')
   const openInspector = useKernel((s) => s.openInspector)
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

@@ -37,9 +37,9 @@ export function HomeModule() {
   const winRate = closed.length ? Math.round((won.length / closed.length) * 100) : 0
 
   return (
-    <div className="rise mx-auto max-w-6xl space-y-6 p-6">
+    <div className="rise mx-auto max-w-6xl space-y-6 p-4 md:p-6">
       <header>
-        <p className="font-serif text-4xl tracking-tight">
+        <p className="text-3xl font-semibold tracking-tight md:text-4xl">
           {t.greeting[greetingKey(new Date().getHours())]}, {first}
         </p>
         <p className="mt-2 text-sm text-muted">{t.home.briefing}</p>
@@ -120,7 +120,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <Surface className="p-4">
       <div className="text-[11px] font-medium uppercase tracking-wider text-faint">{label}</div>
-      <div className="mt-2 font-serif text-3xl tracking-tight">{value}</div>
+      <div className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{value}</div>
     </Surface>
   )
 }

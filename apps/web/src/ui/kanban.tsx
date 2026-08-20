@@ -81,7 +81,7 @@ function KanbanColumn({
     <section
       ref={setNodeRef}
       className={cn(
-        'flex w-[280px] shrink-0 flex-col rounded-2xl border border-line bg-bg/40',
+        'flex w-[min(280px,calc(100vw-2.75rem))] shrink-0 flex-col rounded-2xl border border-line bg-bg/40 md:w-[280px]',
         isOver && 'border-accent/40 bg-bg-1',
       )}
     >

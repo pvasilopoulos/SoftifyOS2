@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useKernel } from '@/kernel/store'
+import { MOBILE_QUERY } from '@/lib/media'
 import { CreateDialog } from '@/ui/create-dialog'
 import { AiPanel } from './ai-panel'
 import { BootScreen } from './boot'
@@ -17,9 +18,11 @@ export function OsShell() {
   const locale = useKernel((s) => s.ui.locale)
   const setCommandOpen = useKernel((s) => s.setCommandOpen)
   const toggleAi = useKernel((s) => s.toggleAi)
+  const setAiOpen = useKernel((s) => s.setAiOpen)
   const openInspector = useKernel((s) => s.openInspector)
   const commandOpen = useKernel((s) => s.ui.commandOpen)
   const inspectorId = useKernel((s) => s.ui.inspectorId)
+  const aiOpen = useKernel((s) => s.ui.aiOpen)
   const multitabs = useKernel((s) => s.ui.multitabs)
   const openTab = useKernel((s) => s.openTab)
   const closeTab = useKernel((s) => s.closeTab)
@@ -31,6 +34,22 @@ export function OsShell() {
     document.documentElement.dataset.density = density
     document.documentElement.lang = locale
   }, [density, locale, theme])
+
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY)
+    const apply = () => {
+      if (mq.matches) {
+        const state = useKernel.getState()
+        state.setAiOpen(false)
+        state.openInspector(null)
+      } else {
+        useKernel.getState().setAiOpen(true)
+      }
+    }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -61,6 +80,7 @@ export function OsShell() {
       if (event.key === 'Escape') {
         setCommandOpen(false)
         openInspector(null)
+        setAiOpen(false)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -73,6 +93,7 @@ export function OsShell() {
     navigate,
     openInspector,
     openTab,
+    setAiOpen,
     setCommandOpen,
     toggleAi,
   ])
@@ -80,9 +101,9 @@ export function OsShell() {
   if (!booted) return <BootScreen />
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full min-h-0 overflow-hidden pt-[env(safe-area-inset-top)]">
       <Dock />
-      <div className="flex min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <div className="relative flex min-w-0 flex-1 flex-col">
           <Topbar />
           <TabBar />
@@ -90,10 +111,30 @@ export function OsShell() {
             <div className="h-full overflow-y-auto scrollbar-thin">
               <Outlet />
             </div>
-            {inspectorId ? <Inspector /> : null}
+            {inspectorId ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 bg-black/40 md:hidden"
+                  onClick={() => openInspector(null)}
+                />
+                <Inspector />
+              </>
+            ) : null}
           </main>
         </div>
-        <AiPanel />
+        {aiOpen ? (
+          <>
+            <button
+              type="button"
+              aria-label="Close"
+              className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 bg-black/40 md:hidden"
+              onClick={() => setAiOpen(false)}
+            />
+            <AiPanel />
+          </>
+        ) : null}
       </div>
       <CommandPalette />
       <CreateDialog />

@@ -1,5 +1,5 @@
 import { useT } from '@/i18n'
-import { useKernel } from '@/kernel/store'
+import { useKernel, useRecords } from '@/kernel/store'
 import { DEAL_STAGES, field } from '@/kernel/types'
 import { formatCurrency } from '@/lib/format'
 import { Surface } from '@/ui/primitives'
@@ -18,28 +18,28 @@ const MONTHS = [
 export function InsightsModule() {
   const t = useT()
   const locale = useKernel((s) => s.ui.locale)
-  const deals = useKernel((s) => s.records.filter((r) => r.type === 'deal'))
-  const tasks = useKernel((s) => s.records.filter((r) => r.type === 'task'))
+  const deals = useRecords('deal')
+  const tasks = useRecords('task')
   const max = Math.max(...MONTHS.map((m) => m.value))
   const ytd = MONTHS.reduce((s, m) => s + m.value, 0) * 1000
   const done = tasks.filter((task) => field(task, 'status', '') === 'done').length
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-6">
+    <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
       <div className="grid gap-4 md:grid-cols-3">
         <Surface className="p-5">
           <div className="text-[11px] font-medium uppercase tracking-wider text-faint">{t.insights.revenue}</div>
-          <div className="mt-2 font-serif text-4xl">{formatCurrency(ytd, locale)}</div>
+          <div className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">{formatCurrency(ytd, locale)}</div>
         </Surface>
         <Surface className="p-5">
           <div className="text-[11px] font-medium uppercase tracking-wider text-faint">{t.insights.pace}</div>
-          <div className="mt-2 font-serif text-4xl">
+          <div className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
             {done}/{tasks.length}
           </div>
         </Surface>
         <Surface className="p-5">
           <div className="text-[11px] font-medium uppercase tracking-wider text-faint">Won</div>
-          <div className="mt-2 font-serif text-4xl">
+          <div className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
             {formatCurrency(
               deals.filter((d) => field(d, 'stage', '') === 'won').reduce((s, d) => s + field(d, 'amount', 0), 0),
               locale,

@@ -33,8 +33,8 @@ export function ViewCanvas({ view }: { view: Design }) {
   }
 
   return (
-    <Surface className="overflow-hidden">
-      <table className="w-full text-sm">
+    <Surface className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
         <thead className="text-left text-[11px] uppercase tracking-wider text-faint">
           <tr className="border-b border-line">
             {(columns.length ? columns : ['title']).map((col) => (

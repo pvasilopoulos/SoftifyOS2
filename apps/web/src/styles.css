@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-bg: var(--bg);
   --color-bg-1: var(--bg-1);
   --color-bg-2: var(--bg-2);
@@ -68,10 +68,19 @@ html,
 body,
 #root {
   height: 100%;
+  min-height: 100dvh;
+  min-height: 100svh;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
   font-family: var(--font-sans);
   background: var(--bg);
   color: var(--ink);
@@ -97,8 +106,24 @@ body::before {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font-family: inherit;
+  touch-action: manipulation;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: inherit;
+  }
 }
 
 ::selection {

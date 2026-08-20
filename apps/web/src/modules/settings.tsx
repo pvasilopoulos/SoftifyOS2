@@ -16,15 +16,15 @@ export function SettingsModule() {
   const logout = useKernel((s) => s.logout)
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6">
+    <div className="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
       <header>
-        <h1 className="font-serif text-4xl">{org.name}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{org.name}</h1>
         <p className="mt-1 text-sm text-muted">{org.plan} plan</p>
       </header>
 
       <Surface className="p-5">
         <h2 className="text-sm font-semibold">{t.settings.appearance}</h2>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {(['dark', 'light'] as const).map((theme) => (
             <button
               key={theme}
@@ -40,7 +40,7 @@ export function SettingsModule() {
           ))}
         </div>
         <h2 className="mt-6 text-sm font-semibold">{t.settings.density}</h2>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {(['comfortable', 'compact'] as const).map((density) => (
             <button
               key={density}
@@ -56,7 +56,7 @@ export function SettingsModule() {
           ))}
         </div>
         <h2 className="mt-6 text-sm font-semibold">{t.settings.multitabs}</h2>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setMultitabs(false)}
@@ -79,7 +79,7 @@ export function SettingsModule() {
           </button>
         </div>
         <h2 className="mt-6 text-sm font-semibold">{t.settings.language}</h2>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {(['el', 'en'] as const).map((locale) => (
             <button
               key={locale}
@@ -130,7 +130,7 @@ export function SettingsModule() {
         </ul>
       </Surface>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={resetDemo}

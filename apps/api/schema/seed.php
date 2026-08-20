@@ -81,6 +81,9 @@ rec($insert, $rel, 'doc_playbook', 'doc', 'Sales playbook', ['emoji' => '◎', '
 
 rec($insert, $rel, 'in_1', 'inbox', 'Board wants a live portal date', ['channel' => 'email', 'read' => false, 'from' => 'Sofia Markou', 'preview' => 'Can we lock a public beta before 12 Oct?'], [['deal', 'dl_helios_core']], $now);
 rec($insert, $rel, 'ac_1', 'activity', 'moved deal to Negotiation', ['actorId' => 'user_maria', 'verb' => 'moved'], [['deal', 'dl_helios_core']], $now);
+rec($insert, $rel, 'ev_1', 'event', 'Helios negotiation', ['start' => (new DateTimeImmutable('+2 hours'))->format('c'), 'end' => (new DateTimeImmutable('+3 hours'))->format('c'), 'location' => 'Meet · Sofia'], [['deal', 'dl_helios_core']], $now);
+rec($insert, $rel, 'ev_2', 'event', 'Studio standup', ['start' => (new DateTimeImmutable('-1 hour'))->format('c'), 'end' => (new DateTimeImmutable('+15 minutes'))->format('c'), 'location' => 'Helix HQ'], [['project', 'pr_internal']], $now);
+rec($insert, $rel, 'ev_3', 'event', 'Nimbus workshop', ['start' => (new DateTimeImmutable('+1 day 3 hours'))->format('c'), 'end' => (new DateTimeImmutable('+1 day 5 hours'))->format('c'), 'location' => 'Thessaloniki'], [['deal', 'dl_nimbus_app']], $now);
 
 $design = $pdo->prepare(
     'INSERT INTO layouts (id, org_id, module_id, name, object_type, kind, is_system, is_default, schema_json)

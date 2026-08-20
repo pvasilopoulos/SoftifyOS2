@@ -32,7 +32,7 @@ export function Inspector() {
   const health = field<string>(record, 'health', '')
 
   return (
-    <div className="absolute inset-y-0 right-0 z-20 flex w-[420px] max-w-full flex-col border-l border-line bg-bg-1 shadow-[var(--shadow)]">
+    <div className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col border-line bg-bg-1 shadow-[var(--shadow)] md:absolute md:inset-y-0 md:right-0 md:bottom-auto md:top-auto md:z-20 md:w-[420px] md:max-w-full md:border-l">
       <header className="flex items-start gap-3 border-b border-line px-4 py-3">
         <div className="min-w-0 flex-1">
           <Badge tone="accent">{t.types[record.type]}</Badge>

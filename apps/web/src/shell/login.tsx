@@ -12,7 +12,7 @@ export function LoginScreen() {
   const [busy, setBusy] = useState(false)
 
   return (
-    <div className="grid h-full place-items-center px-6">
+    <div className="grid h-full min-h-dvh place-items-center overflow-y-auto px-4 py-10 sm:px-6">
       <form
         className="rise w-full max-w-[400px]"
         onSubmit={(event) => {
@@ -27,7 +27,7 @@ export function LoginScreen() {
       >
         <div className="mb-8 flex flex-col items-center text-center">
           <Logo className="mb-6 scale-110" />
-          <h1 className="font-serif text-4xl tracking-tight">{t.login.title}</h1>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t.login.title}</h1>
           <p className="mt-2 text-sm text-muted">{t.login.subtitle}</p>
         </div>
         <div className="rounded-2xl border border-line bg-bg-1 p-5 shadow-[var(--shadow)]">

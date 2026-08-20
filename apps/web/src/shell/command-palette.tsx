@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
 import type { RecordType } from '@/kernel/types'
 import { cn } from '@/lib/format'
+import { skipNextTabSync } from './tab-bar'
 
 const nav = [
   { to: '/', key: 'home' as const },
@@ -41,12 +42,28 @@ export function CommandPalette() {
   const records = useKernel((s) => s.records)
   const setCreateType = useKernel((s) => s.setCreateType)
   const openInspector = useKernel((s) => s.openInspector)
+  const openTab = useKernel((s) => s.openTab)
   const navigate = useNavigate()
+  const location = useLocation()
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
 
   const items = useMemo(() => {
     const query = q.trim().toLowerCase()
+    const tabItems: PaletteItem[] = !query || t.settings.newTab.toLowerCase().includes(query)
+      ? [
+          {
+            id: 'tab:new',
+            group: t.command.nav,
+            label: t.settings.newTab,
+            run: () => {
+              skipNextTabSync()
+              openTab('/', location.pathname)
+              navigate('/')
+            },
+          },
+        ]
+      : []
     const navItems: PaletteItem[] = nav
       .filter((item) => t.nav[item.key].toLowerCase().includes(query) || !query)
       .map((item) => ({
@@ -85,8 +102,8 @@ export function CommandPalette() {
           navigate(routes[record.type] ?? '/')
         },
       }))
-    return [...navItems, ...createItems, ...recordItems]
-  }, [navigate, openInspector, q, records, setCreateType, t])
+    return [...tabItems, ...navItems, ...createItems, ...recordItems]
+  }, [location.pathname, navigate, openInspector, openTab, q, records, setCreateType, t])
 
   useEffect(() => {
     setActive(0)
@@ -108,9 +125,9 @@ export function CommandPalette() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" onClick={close}>
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] md:p-0" onClick={close}>
       <div
-        className="rise mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-line-strong bg-bg-1 shadow-[var(--shadow)]"
+        className="rise flex h-full w-full flex-col overflow-hidden border-line-strong bg-bg-1 pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow)] md:mx-auto md:mt-[12vh] md:h-auto md:max-w-xl md:rounded-2xl md:border md:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         <input
@@ -133,9 +150,9 @@ export function CommandPalette() {
             }
             if (e.key === 'Escape') close()
           }}
-          className="h-12 w-full border-b border-line bg-transparent px-4 text-sm outline-none placeholder:text-faint"
+          className="h-14 w-full border-b border-line bg-transparent px-4 text-base outline-none placeholder:text-faint md:h-12 md:text-sm"
         />
-        <div className="max-h-[420px] overflow-y-auto p-2 scrollbar-thin">
+        <div className="min-h-0 flex-1 overflow-y-auto p-2 scrollbar-thin md:max-h-[420px] md:flex-none">
           {items.length === 0 ? (
             <div className="px-3 py-8 text-center text-sm text-muted">{t.command.empty}</div>
           ) : (
@@ -146,7 +163,7 @@ export function CommandPalette() {
                 onMouseEnter={() => setActive(index)}
                 onClick={() => run(index)}
                 className={cn(
-                  'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm',
+                  'flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm md:py-2',
                   index === active && 'bg-bg-2',
                 )}
               >

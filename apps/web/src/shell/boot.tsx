@@ -17,7 +17,7 @@ export function BootScreen() {
     <div className="grid h-full place-items-center px-6">
       <div className="rise flex w-full max-w-md flex-col items-center text-center">
         <Logo className="mb-8 scale-125" />
-        <p className="font-serif text-4xl tracking-tight text-ink sm:text-5xl">{t.brand}</p>
+        <p className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">{t.brand}</p>
         <p className="mt-3 text-sm text-muted">{t.tagline}</p>
         <div className="mt-10 w-full rounded-2xl border border-line bg-bg-1 p-4 text-left">
           <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-faint">

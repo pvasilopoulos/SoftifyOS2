@@ -27,10 +27,10 @@ export function StudioHub() {
     { to: '/studio/forms', key: 'forms', icon: FormInput },
   ]
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
       <header>
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-faint">Studio</p>
-        <h1 className="mt-1 font-serif text-4xl tracking-tight">{t.studio.title}</h1>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">{t.studio.title}</h1>
         <p className="mt-2 text-sm text-muted">{t.studio.hint}</p>
       </header>
       <div className="grid gap-3 md:grid-cols-3">
@@ -77,8 +77,30 @@ export function StudioDesigner() {
   }
 
   return (
-    <div className="flex h-full min-h-0">
-      <aside className="w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin">
+    <div className="flex h-full min-h-0 flex-col md:flex-row">
+      <div className="flex gap-1 overflow-x-auto border-b border-line p-2 scrollbar-thin md:hidden">
+        {items.map((item) => (
+          <NavLink
+            key={item.id}
+            to={`/studio/${table}/${item.id}`}
+            className={({ isActive }) =>
+              cn('shrink-0 rounded-full px-3 py-1.5 text-sm', isActive && 'bg-bg-2 font-medium')
+            }
+          >
+            {item.name}
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-bg-2"
+          onClick={() =>
+            void createNew(table, saveDesign).then((item) => navigate(`/studio/${table}/${item.id}`))
+          }
+        >
+          <Plus className="size-3.5" />
+        </button>
+      </div>
+      <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin md:block">
         <div className="mb-2 flex items-center justify-between px-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-faint">
             {t.studio[table]}
@@ -109,7 +131,7 @@ export function StudioDesigner() {
         ))}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-line px-4 py-3">
+        <header className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-3 md:gap-3 md:px-4">
           <input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}

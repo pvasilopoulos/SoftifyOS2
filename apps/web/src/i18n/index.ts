@@ -31,6 +31,7 @@ const el = {
     insights: 'Insights',
     studio: 'Studio',
     settings: 'Ρυθμίσεις',
+    more: 'Περισσότερα',
   },
   search: 'Αναζήτηση ή εντολή…',
   command: {
@@ -209,6 +210,7 @@ const en: typeof el = {
     insights: 'Insights',
     studio: 'Studio',
     settings: 'Settings',
+    more: 'More',
   },
   search: 'Search or command…',
   command: {

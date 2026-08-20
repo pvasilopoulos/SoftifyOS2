@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, X } from 'lucide-react'
 import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
 import { DEAL_STAGES, field, type DealStage } from '@/kernel/types'
@@ -59,6 +59,7 @@ export function AiPanel() {
   const t = useT()
   const locale = useKernel((s) => s.ui.locale)
   const open = useKernel((s) => s.ui.aiOpen)
+  const setAiOpen = useKernel((s) => s.setAiOpen)
   const records = useKernel((s) => s.records)
   const [input, setInput] = useState('')
   const [chat, setChat] = useState<Chat[]>([])
@@ -75,10 +76,13 @@ export function AiPanel() {
   }
 
   return (
-    <aside className="flex w-[340px] shrink-0 flex-col border-l border-line bg-bg-1">
-      <header className="flex h-14 items-center gap-2 border-b border-line px-4">
+    <aside className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col border-line bg-bg-1 md:static md:inset-auto md:z-auto md:w-[340px] md:shrink-0 md:border-l">
+      <header className="flex h-12 items-center gap-2 border-b border-line px-4 md:h-14">
         <Sparkles className="size-4 text-ai" />
-        <div className="text-sm font-semibold">{t.ai.title}</div>
+        <div className="flex-1 text-sm font-semibold">{t.ai.title}</div>
+        <button type="button" onClick={() => setAiOpen(false)} className="text-muted hover:text-ink md:hidden">
+          <X className="size-4" />
+        </button>
       </header>
       <div className="flex-1 space-y-3 overflow-y-auto p-4 text-sm scrollbar-thin">
         <div className="rounded-2xl border border-line bg-bg px-3.5 py-3 leading-relaxed text-muted">

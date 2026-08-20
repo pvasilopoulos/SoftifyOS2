@@ -42,11 +42,14 @@ export function CreateDialog() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setCreateType(null)}>
+    <div
+      className="fixed inset-0 z-50 grid items-end bg-black/50 p-0 md:place-items-center md:items-center md:p-4"
+      onClick={() => setCreateType(null)}
+    >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-md rounded-2xl border border-line-strong bg-bg-1 p-5 shadow-[var(--shadow)]"
+        className="w-full max-w-md rounded-t-2xl border border-line-strong bg-bg-1 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[var(--shadow)] md:rounded-2xl md:pb-5"
       >
         <h2 className="text-base font-semibold">{labels[type] ?? t.create.save}</h2>
         <label className="mt-4 block text-xs font-medium text-muted">

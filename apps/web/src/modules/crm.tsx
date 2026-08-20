@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useT } from '@/i18n'
-import { useKernel } from '@/kernel/store'
+import { useKernel, useModuleViews, useRecords } from '@/kernel/store'
 import { DEAL_STAGES, field } from '@/kernel/types'
 import { cn, formatCurrency, formatDate } from '@/lib/format'
 import { Kanban } from '@/ui/kanban'
@@ -9,7 +9,7 @@ import { ViewCanvas } from '@/ui/view-canvas'
 
 export function CrmLayout() {
   const t = useT()
-  const views = useKernel((s) => s.views.filter((view) => view.moduleId === 'crm'))
+  const views = useModuleViews('crm')
   const activeId = useKernel((s) => s.activeViews.crm)
   const setActiveView = useKernel((s) => s.setActiveView)
   const view = views.find((item) => item.id === activeId) ?? views[0]
@@ -20,7 +20,7 @@ export function CrmLayout() {
   ]
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center gap-1 px-6 pt-4">
+      <div className="flex flex-wrap items-center gap-1 px-4 pt-4 md:px-6">
         {views.length
           ? views.map((item) => (
               <button
@@ -62,7 +62,7 @@ export function CrmLayout() {
 export function CrmPipeline() {
   const t = useT()
   const locale = useKernel((s) => s.ui.locale)
-  const deals = useKernel((s) => s.records.filter((r) => r.type === 'deal'))
+  const deals = useRecords('deal')
   const members = useKernel((s) => s.members)
   const patchFields = useKernel((s) => s.patchFields)
   const openInspector = useKernel((s) => s.openInspector)
@@ -80,7 +80,7 @@ export function CrmPipeline() {
   }))
 
   return (
-    <div className="h-full min-h-[520px]">
+    <div className="h-full min-h-0 md:min-h-[520px]">
       <Kanban
         columns={columns}
         items={deals}
@@ -112,11 +112,11 @@ export function CrmPipeline() {
 
 export function CrmCompanies() {
   const t = useT()
-  const companies = useKernel((s) => s.records.filter((r) => r.type === 'company'))
+  const companies = useRecords('company')
   const openInspector = useKernel((s) => s.openInspector)
   return (
-    <Surface className="overflow-hidden">
-      <table className="w-full text-sm">
+    <Surface className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
         <thead className="text-left text-[11px] uppercase tracking-wider text-faint">
           <tr className="border-b border-line">
             <th className="px-4 py-3 font-medium">{t.crm.companies}</th>
@@ -151,8 +151,8 @@ export function CrmContacts() {
   const openInspector = useKernel((s) => s.openInspector)
   const contacts = records.filter((r) => r.type === 'contact')
   return (
-    <Surface className="overflow-hidden">
-      <table className="w-full text-sm">
+    <Surface className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
         <thead className="text-left text-[11px] uppercase tracking-wider text-faint">
           <tr className="border-b border-line">
             <th className="px-4 py-3 font-medium">Name</th>

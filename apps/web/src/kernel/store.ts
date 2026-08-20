@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 import { api, getToken, setToken } from '@/kernel/api'
 import { uid } from '@/lib/format'
 import { CURRENT_USER_ID, DEMO_RECORDS, MEMBERS, ORG } from './demo-data'
@@ -70,7 +71,7 @@ interface KernelState {
   openInspector: (id: string | null) => void
   setCreateType: (type: RecordType | null) => void
   setActiveView: (moduleId: string, viewId: string) => void
-  openTab: (path: string) => void
+  openTab: (path: string, currentPath?: string) => void
   closeTab: (id: string) => void
   setActiveTab: (id: string) => void
   syncTabPath: (path: string) => void
@@ -99,7 +100,7 @@ const defaultUi: UiState = {
   density: 'comfortable',
   booted: false,
   commandOpen: false,
-  aiOpen: true,
+  aiOpen: false,
   inspectorId: null,
   createType: null,
   multitabs: false,
@@ -173,7 +174,9 @@ export const useKernel = create<KernelState>()(
       },
       hydrate: async () => {
         if (!getToken()) {
-          set({ hydrating: false, authenticated: false })
+          if (get().hydrating || get().authenticated) {
+            set({ hydrating: false, authenticated: false })
+          }
           return false
         }
         try {
@@ -206,9 +209,18 @@ export const useKernel = create<KernelState>()(
       setCreateType: (createType) => set((s) => ({ ui: { ...s.ui, createType } })),
       setActiveView: (moduleId, viewId) =>
         set((s) => ({ activeViews: { ...s.activeViews, [moduleId]: viewId } })),
-      openTab: (path) => {
+      openTab: (path, currentPath) => {
         const tab = newTab(path)
-        set((s) => ({ tabs: [...s.tabs, tab], activeTabId: tab.id }))
+        set((s) => ({
+          ui: { ...s.ui, multitabs: true },
+          tabs: [
+            ...s.tabs.map((item) =>
+              currentPath && item.id === s.activeTabId ? { ...item, path: currentPath } : item,
+            ),
+            tab,
+          ],
+          activeTabId: tab.id,
+        }))
       },
       closeTab: (id) =>
         set((s) => {
@@ -219,9 +231,13 @@ export const useKernel = create<KernelState>()(
         }),
       setActiveTab: (activeTabId) => set({ activeTabId }),
       syncTabPath: (path) =>
-        set((s) => ({
-          tabs: s.tabs.map((tab) => (tab.id === s.activeTabId ? { ...tab, path } : tab)),
-        })),
+        set((s) => {
+          const current = s.tabs.find((tab) => tab.id === s.activeTabId)
+          if (current?.path === path) return s
+          return {
+            tabs: s.tabs.map((tab) => (tab.id === s.activeTabId ? { ...tab, path } : tab)),
+          }
+        }),
       createRecord: (input) => {
         const record: SoftifyRecord = {
           id: uid(input.type.slice(0, 2)),
@@ -298,13 +314,12 @@ export const useKernel = create<KernelState>()(
     }),
     {
       name: 'softifyos-kernel',
-      version: 3,
+      version: 4,
       partialize: (state) => ({
         ui: {
           theme: state.ui.theme,
           locale: state.ui.locale,
           density: state.ui.density,
-          aiOpen: state.ui.aiOpen,
           multitabs: state.ui.multitabs,
         },
       }),
@@ -319,6 +334,7 @@ export const useKernel = create<KernelState>()(
             commandOpen: false,
             inspectorId: null,
             createType: null,
+            aiOpen: false,
           },
         }
       },
@@ -327,9 +343,13 @@ export const useKernel = create<KernelState>()(
 )
 
 export function useRecords(type?: RecordType) {
-  return useKernel((s) =>
-    type ? s.records.filter((record) => record.type === type) : s.records,
+  return useKernel(
+    useShallow((s) => (type ? s.records.filter((record) => record.type === type) : s.records)),
   )
+}
+
+export function useModuleViews(moduleId: string) {
+  return useKernel(useShallow((s) => s.views.filter((view) => view.moduleId === moduleId)))
 }
 
 export function useRecord(id: string | null) {
