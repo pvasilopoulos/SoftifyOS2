@@ -80,6 +80,9 @@ rec($insert, $rel, 'doc_handbook', 'doc', 'Studio handbook', ['emoji' => '◈', 
 rec($insert, $rel, 'doc_playbook', 'doc', 'Sales playbook', ['emoji' => '◎', 'body' => 'We sell outcomes, not hours. Demo the graph: a deal that becomes a project without export.'], [], $now);
 
 rec($insert, $rel, 'in_1', 'inbox', 'Board wants a live portal date', ['channel' => 'email', 'read' => false, 'from' => 'Sofia Markou', 'preview' => 'Can we lock a public beta before 12 Oct?'], [['deal', 'dl_helios_core']], $now);
+rec($insert, $rel, 'in_2', 'inbox', 'Aegean ops wants the proposal deck', ['channel' => 'os', 'read' => false, 'from' => 'Andreas Vlachos', 'preview' => 'Review status · send before Friday'], [['task', 'tk_2']], $now);
+rec($insert, $rel, 'in_3', 'inbox', 'Nimbus deal is cooling', ['channel' => 'os', 'read' => false, 'from' => 'SoftifyOS', 'preview' => 'Qualified 45% · no activity this week'], [['deal', 'dl_nimbus_app']], $now);
+rec($insert, $rel, 'in_4', 'inbox', 'Helios legal redlines', ['channel' => 'os', 'read' => false, 'from' => 'Jordan Lee', 'preview' => 'Urgent task still in progress'], [['task', 'tk_5']], $now);
 rec($insert, $rel, 'ac_1', 'activity', 'moved deal to Negotiation', ['actorId' => 'user_maria', 'verb' => 'moved'], [['deal', 'dl_helios_core']], $now);
 rec($insert, $rel, 'ev_1', 'event', 'Helios negotiation', ['start' => (new DateTimeImmutable('+2 hours'))->format('c'), 'end' => (new DateTimeImmutable('+3 hours'))->format('c'), 'location' => 'Meet · Sofia'], [['deal', 'dl_helios_core']], $now);
 rec($insert, $rel, 'ev_2', 'event', 'Studio standup', ['start' => (new DateTimeImmutable('-1 hour'))->format('c'), 'end' => (new DateTimeImmutable('+15 minutes'))->format('c'), 'location' => 'Helix HQ'], [['project', 'pr_internal']], $now);

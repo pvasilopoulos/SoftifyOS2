@@ -103,7 +103,29 @@ function newTab(path: string): WorkspaceTab {
 
 const persistTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
-function schedulePersist(get: () => KernelState, id: string) {
+type KernelSet = (partial: Partial<KernelState> | ((state: KernelState) => Partial<KernelState> | KernelState)) => void
+
+/** Pull new inbox/activity rows without overwriting in-progress CRM/Work edits. */
+function mergeServerNotes(set: KernelSet) {
+  if (!getToken()) return
+  void Promise.all([
+    api<{ records: SoftifyRecord[] }>('/api/records?type=inbox'),
+    api<{ records: SoftifyRecord[] }>('/api/records?type=activity'),
+  ])
+    .then(([inbox, activity]) => {
+      const incoming = [...(inbox.records ?? []), ...(activity.records ?? [])]
+      if (!incoming.length) return
+      set((s) => {
+        const have = new Set(s.records.map((row) => row.id))
+        const extra = incoming.filter((row) => !have.has(row.id))
+        if (!extra.length) return s
+        return { records: [...extra, ...s.records] }
+      })
+    })
+    .catch(() => undefined)
+}
+
+function schedulePersist(get: () => KernelState, set: KernelSet, id: string) {
   const previous = persistTimers.get(id)
   if (previous) clearTimeout(previous)
   persistTimers.set(
@@ -113,6 +135,7 @@ function schedulePersist(get: () => KernelState, id: string) {
       if (!getToken()) return
       const record = get().records.find((row) => row.id === id)
       if (!record || record.type === 'activity') return
+      const pullNotes = record.type !== 'inbox'
       void api(`/api/records/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({
@@ -120,7 +143,11 @@ function schedulePersist(get: () => KernelState, id: string) {
           fields: record.fields,
           relations: record.relations,
         }),
-      }).catch(() => undefined)
+      })
+        .then(() => {
+          if (pullNotes) mergeServerNotes(set)
+        })
+        .catch(() => undefined)
     }, 280),
   )
 }
@@ -311,12 +338,13 @@ export const useKernel = create<KernelState>()(
             method: 'POST',
             body: JSON.stringify(record),
           })
-            .then((data) =>
+            .then((data) => {
               set((s) => ({
                 records: s.records.map((item) => (item.id === record.id ? data.record : item)),
                 ui: { ...s.ui, inspectorId: data.record.id },
-              })),
-            )
+              }))
+              mergeServerNotes(set)
+            })
             .catch(() => undefined)
         }
         return record
@@ -335,7 +363,7 @@ export const useKernel = create<KernelState>()(
               : record,
           ),
         }))
-        schedulePersist(get, id)
+        schedulePersist(get, set, id)
       },
       patchFields: (id, fields) => get().updateRecord(id, { fields }),
       setRelations: (id, relations) => get().updateRecord(id, { relations }),

@@ -55,6 +55,7 @@ const el = {
   },
   home: {
     briefing: 'Ημερήσιο briefing',
+    inbox: 'Χρειάζεται προσοχή',
     focus: 'Σήμερα',
     pipeline: 'Pipeline',
     mine: 'Η δουλειά μου',
@@ -84,6 +85,8 @@ const el = {
     all: 'Όλα',
     unread: 'Μη διαβασμένα',
     markRead: 'Διαβάστηκε',
+    markAll: 'Όλα διαβασμένα',
+    empty: 'Η ουρά είναι καθαρή.',
   },
   docs: { untitled: 'Χωρίς τίτλο', hint: 'Γράψε. Οι σελίδες ζουν δίπλα στα records.' },
   calendar: { today: 'Σήμερα', week: 'Εβδομάδα' },
@@ -240,6 +243,7 @@ const en: typeof el = {
   },
   home: {
     briefing: 'Daily briefing',
+    inbox: 'Needs attention',
     focus: 'Today',
     pipeline: 'Pipeline',
     mine: 'My work',
@@ -269,6 +273,8 @@ const en: typeof el = {
     all: 'All',
     unread: 'Unread',
     markRead: 'Mark read',
+    markAll: 'Mark all read',
+    empty: 'Inbox is clear.',
   },
   docs: { untitled: 'Untitled', hint: 'Write. Pages live next to records.' },
   calendar: { today: 'Today', week: 'Week' },

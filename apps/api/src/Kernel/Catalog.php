@@ -91,8 +91,16 @@ final class Catalog
             ],
         );
         self::replaceRelations($id, $input['relations'] ?? []);
-        if ($actorId && $type !== 'activity') {
+        if ($actorId && $type !== 'activity' && $type !== 'inbox') {
             self::addActivity($orgId, $actorId, 'created ' . $type, $type, $id);
+            self::addInbox(
+                $orgId,
+                $actorId,
+                (string) ($input['title'] ?? 'Untitled'),
+                $type,
+                $id,
+                'created ' . $type,
+            );
         }
         return self::record($orgId, $id) ?? [];
     }
@@ -117,10 +125,11 @@ final class Catalog
         if (array_key_exists('relations', $input) && is_array($input['relations'])) {
             self::replaceRelations($id, $input['relations']);
         }
-        if ($actorId && $existing['type'] !== 'activity') {
+        if ($actorId && $existing['type'] !== 'activity' && $existing['type'] !== 'inbox') {
             $note = self::changeNote($existing['type'], $before, $fields, $existing['title'], $title);
             if ($note !== null) {
                 self::addActivity($orgId, $actorId, $note, $existing['type'], $id);
+                self::addInbox($orgId, $actorId, $title, $existing['type'], $id, $note);
             }
         }
         return self::record($orgId, $id);
@@ -258,6 +267,44 @@ final class Catalog
                 'activity',
                 $title,
                 json_encode(['actorId' => $actorId, 'verb' => 'updated'], JSON_UNESCAPED_UNICODE),
+                $now,
+                $now,
+            ],
+        );
+        Database::run(
+            'INSERT INTO record_relations (record_id, kind, related_id) VALUES (?, ?, ?)',
+            [$id, $parentType, $parentId],
+        );
+    }
+
+    private static function addInbox(
+        string $orgId,
+        string $actorId,
+        string $title,
+        string $parentType,
+        string $parentId,
+        string $preview,
+    ): void {
+        if (!in_array($parentType, ['deal', 'task', 'company', 'contact', 'project'], true)) {
+            return;
+        }
+        $user = Database::one('SELECT name FROM users WHERE id = ?', [$actorId]);
+        $id = 'in_' . bin2hex(random_bytes(4));
+        $now = gmdate('c');
+        Database::run(
+            'INSERT INTO records (id, org_id, type, title, fields_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [
+                $id,
+                $orgId,
+                'inbox',
+                $title,
+                json_encode([
+                    'channel' => 'os',
+                    'read' => false,
+                    'from' => $user['name'] ?? 'SoftifyOS',
+                    'preview' => $preview,
+                ], JSON_UNESCAPED_UNICODE),
                 $now,
                 $now,
             ],

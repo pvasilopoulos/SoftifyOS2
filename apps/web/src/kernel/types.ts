@@ -90,3 +90,9 @@ export function field(record: SoftifyRecord, key: string, fallback: unknown) {
 export function relatedIds(record: SoftifyRecord, kind: RelationKind) {
   return record.relations.filter((rel) => rel.kind === kind).map((rel) => rel.id)
 }
+
+export function workspacePathForRelated(type: RecordType | undefined) {
+  if (type === 'task' || type === 'project') return '/work'
+  if (type === 'deal' || type === 'company' || type === 'contact') return '/crm'
+  return '/inbox'
+}

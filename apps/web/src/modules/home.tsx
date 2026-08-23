@@ -1,6 +1,7 @@
+import { useNavigate } from 'react-router-dom'
 import { useT } from '@/i18n'
 import { useCurrentUser, useKernel } from '@/kernel/store'
-import { field } from '@/kernel/types'
+import { field, workspacePathForRelated } from '@/kernel/types'
 import { formatCurrency, formatRelative } from '@/lib/format'
 import { Avatar, Badge, Surface } from '@/ui/primitives'
 
@@ -19,6 +20,8 @@ export function HomeModule() {
   const members = useKernel((s) => s.members)
   const records = useKernel((s) => s.records)
   const openInspector = useKernel((s) => s.openInspector)
+  const patchFields = useKernel((s) => s.patchFields)
+  const navigate = useNavigate()
   const first = user.name.split(' ')[0]
   const deals = records.filter((r) => r.type === 'deal')
   const openDeals = deals.filter((d) => !['won', 'lost'].includes(field(d, 'stage', '')))
@@ -35,6 +38,10 @@ export function HomeModule() {
     .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
     .slice(0, 6)
   const winRate = closed.length ? Math.round((won.length / closed.length) * 100) : 0
+  const inbox = records
+    .filter((r) => r.type === 'inbox' && r.fields.read === false)
+    .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+    .slice(0, 4)
 
   return (
     <div className="rise mx-auto max-w-6xl space-y-6 p-4 md:p-6">
@@ -44,6 +51,36 @@ export function HomeModule() {
         </p>
         <p className="mt-2 text-sm text-muted">{t.home.briefing}</p>
       </header>
+
+      {inbox.length ? (
+        <Surface className="p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold">{t.home.inbox}</h2>
+            <button type="button" onClick={() => navigate('/inbox')} className="text-xs text-accent hover:underline">
+              Inbox →
+            </button>
+          </div>
+          <ul className="mt-3 divide-y divide-line">
+            {inbox.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    patchFields(item.id, { read: true })
+                    const related = records.find((r) => r.id === item.relations[0]?.id)
+                    navigate(workspacePathForRelated(related?.type))
+                    openInspector(related?.id ?? item.id)
+                  }}
+                  className="flex w-full items-center justify-between gap-3 py-2.5 text-left text-sm hover:text-accent"
+                >
+                  <span className="truncate font-medium">{item.title}</span>
+                  <span className="shrink-0 text-[11px] text-faint">{formatRelative(item.createdAt, locale)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Surface>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label={t.home.openDeals} value={String(openDeals.length)} />
