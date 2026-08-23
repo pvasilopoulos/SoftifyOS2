@@ -92,9 +92,13 @@ const el = {
   docs: { untitled: 'Χωρίς τίτλο', hint: 'Γράψε. Οι σελίδες ζουν δίπλα στα records.' },
   calendar: { today: 'Σήμερα', week: 'Εβδομάδα', prev: 'Προηγούμενη', next: 'Επόμενη', due: 'Due' },
   insights: {
-    revenue: 'Έσοδα YTD',
+    revenue: 'Κλεισμένα έσοδα',
+    won: 'Won',
     funnel: 'Funnel',
-    pace: 'Delivery pace',
+    pace: 'Delivery',
+    overdue: 'Overdue',
+    owners: 'Pipeline ανά άτομο',
+    attention: 'Στο ραντάρ',
   },
   settings: {
     appearance: 'Εμφάνιση',
@@ -284,9 +288,13 @@ const en: typeof el = {
   docs: { untitled: 'Untitled', hint: 'Write. Pages live next to records.' },
   calendar: { today: 'Today', week: 'Week', prev: 'Previous', next: 'Next', due: 'Due' },
   insights: {
-    revenue: 'Revenue YTD',
+    revenue: 'Closed revenue',
+    won: 'Won',
     funnel: 'Funnel',
-    pace: 'Delivery pace',
+    pace: 'Delivery',
+    overdue: 'Overdue',
+    owners: 'Pipeline by owner',
+    attention: 'On the radar',
   },
   settings: {
     appearance: 'Appearance',
