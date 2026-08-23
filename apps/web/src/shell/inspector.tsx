@@ -58,7 +58,7 @@ export function Inspector() {
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col border-line bg-bg-1 shadow-[var(--shadow)] md:absolute md:inset-y-0 md:right-0 md:bottom-auto md:top-auto md:z-30 md:w-[420px] md:max-w-full md:border-l">
+    <div className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col border-line bg-bg-1 shadow-[var(--shadow)] md:absolute md:top-0 md:right-0 md:bottom-0 md:left-auto md:z-30 md:w-[420px] md:border-l">
       <header className="flex shrink-0 items-start gap-3 border-b border-line px-4 py-3">
         <div className="min-w-0 flex-1">
           <Badge tone="accent">{t.types[record.type]}</Badge>
