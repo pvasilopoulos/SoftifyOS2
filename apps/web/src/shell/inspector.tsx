@@ -68,9 +68,21 @@ export function Inspector() {
             className="mt-2 w-full bg-transparent text-lg font-semibold outline-none"
           />
         </div>
-        <button type="button" onClick={() => close(null)} className="mt-1 text-muted hover:text-ink">
-          <X className="size-4" />
-        </button>
+        <div className="mt-1 flex items-center gap-1">
+          <button
+            type="button"
+            title={t.inspector.delete}
+            onClick={() => {
+              if (window.confirm(t.inspector.confirmDelete)) deleteRecord(record.id)
+            }}
+            className="rounded-lg p-1.5 text-muted hover:bg-danger/10 hover:text-danger"
+          >
+            <Trash2 className="size-4" />
+          </button>
+          <button type="button" onClick={() => close(null)} className="rounded-lg p-1.5 text-muted hover:text-ink">
+            <X className="size-4" />
+          </button>
+        </div>
       </header>
       <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
         <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -346,16 +358,6 @@ export function Inspector() {
           )}
         </section>
         <p className="mt-6 text-[11px] text-faint">{formatDate(record.updatedAt, locale, true)}</p>
-        <button
-          type="button"
-          onClick={() => {
-            if (window.confirm(t.inspector.confirmDelete)) deleteRecord(record.id)
-          }}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-danger hover:bg-danger/10"
-        >
-          <Trash2 className="size-3.5" />
-          {t.inspector.delete}
-        </button>
       </div>
     </div>
   )
