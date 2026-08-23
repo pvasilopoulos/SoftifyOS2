@@ -1,6 +1,8 @@
 CREATE DATABASE IF NOT EXISTS softifyos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'softify'@'localhost' IDENTIFIED BY 'softify';
+CREATE USER IF NOT EXISTS 'softify'@'127.0.0.1' IDENTIFIED BY 'softify';
 GRANT ALL PRIVILEGES ON softifyos.* TO 'softify'@'localhost';
+GRANT ALL PRIVILEGES ON softifyos.* TO 'softify'@'127.0.0.1';
 FLUSH PRIVILEGES;
 
 USE softifyos;

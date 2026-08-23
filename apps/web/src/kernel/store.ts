@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { api, getToken, setToken } from '@/kernel/api'
+import { verifyLogin } from '@/kernel/auth'
 import { uid } from '@/lib/format'
 import { CURRENT_USER_ID, DEMO_RECORDS, MEMBERS, ORG } from './demo-data'
 import type {
@@ -158,8 +159,20 @@ export const useKernel = create<KernelState>()(
           }))
           return true
         } catch {
-          setToken(null)
-          return false
+          // Preview / missing PHP: same demo credentials, in-memory workspace.
+          if (!verifyLogin(username, password)) {
+            setToken(null)
+            return false
+          }
+          const tab = newTab('/')
+          set((s) => ({
+            authenticated: true,
+            hydrating: false,
+            tabs: [tab],
+            activeTabId: tab.id,
+            ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
+          }))
+          return true
         }
       },
       logout: () => {
