@@ -70,9 +70,12 @@ final class Catalog
     }
 
     /** @param array<string, mixed> $input */
-    public static function createRecord(string $orgId, array $input): array
+    public static function createRecord(string $orgId, array $input, ?string $actorId = null): array
     {
-        $id = $input['id'] ?? ('rec_' . bin2hex(random_bytes(4)));
+        $id = is_string($input['id'] ?? null) && $input['id'] !== ''
+            ? $input['id']
+            : ('rec_' . bin2hex(random_bytes(4)));
+        $type = (string) ($input['type'] ?? 'task');
         $now = gmdate('c');
         Database::run(
             'INSERT INTO records (id, org_id, type, title, fields_json, created_at, updated_at)
@@ -80,30 +83,29 @@ final class Catalog
             [
                 $id,
                 $orgId,
-                (string) ($input['type'] ?? 'task'),
+                $type,
                 (string) ($input['title'] ?? 'Untitled'),
                 json_encode($input['fields'] ?? new \stdClass(), JSON_UNESCAPED_UNICODE),
                 $now,
                 $now,
             ],
         );
-        foreach ($input['relations'] ?? [] as $rel) {
-            Database::run(
-                'INSERT INTO record_relations (record_id, kind, related_id) VALUES (?, ?, ?)',
-                [$id, $rel['kind'], $rel['id']],
-            );
+        self::replaceRelations($id, $input['relations'] ?? []);
+        if ($actorId && $type !== 'activity') {
+            self::addActivity($orgId, $actorId, 'created ' . $type, $type, $id);
         }
         return self::record($orgId, $id) ?? [];
     }
 
     /** @param array<string, mixed> $input */
-    public static function updateRecord(string $orgId, string $id, array $input): ?array
+    public static function updateRecord(string $orgId, string $id, array $input, ?string $actorId = null): ?array
     {
         $existing = Database::one('SELECT * FROM records WHERE org_id = ? AND id = ?', [$orgId, $id]);
         if ($existing === null) {
             return null;
         }
         $fields = json_decode($existing['fields_json'] ?: '{}', true) ?: [];
+        $before = $fields;
         if (isset($input['fields']) && is_array($input['fields'])) {
             $fields = array_merge($fields, $input['fields']);
         }
@@ -112,7 +114,27 @@ final class Catalog
             'UPDATE records SET title = ?, fields_json = ?, updated_at = ? WHERE id = ?',
             [$title, json_encode($fields, JSON_UNESCAPED_UNICODE), gmdate('c'), $id],
         );
+        if (array_key_exists('relations', $input) && is_array($input['relations'])) {
+            self::replaceRelations($id, $input['relations']);
+        }
+        if ($actorId && $existing['type'] !== 'activity') {
+            $note = self::changeNote($existing['type'], $before, $fields, $existing['title'], $title);
+            if ($note !== null) {
+                self::addActivity($orgId, $actorId, $note, $existing['type'], $id);
+            }
+        }
         return self::record($orgId, $id);
+    }
+
+    public static function deleteRecord(string $orgId, string $id): bool
+    {
+        $existing = Database::one('SELECT id FROM records WHERE org_id = ? AND id = ?', [$orgId, $id]);
+        if ($existing === null) {
+            return false;
+        }
+        Database::run('DELETE FROM record_relations WHERE record_id = ? OR related_id = ?', [$id, $id]);
+        Database::run('DELETE FROM records WHERE org_id = ? AND id = ?', [$orgId, $id]);
+        return true;
     }
 
     public static function designs(string $table, string $orgId, ?string $module = null): array
@@ -206,5 +228,62 @@ final class Catalog
             'createdAt' => $row['created_at'],
             'updatedAt' => $row['updated_at'],
         ];
+    }
+
+    /** @param list<mixed> $relations */
+    private static function replaceRelations(string $recordId, array $relations): void
+    {
+        Database::run('DELETE FROM record_relations WHERE record_id = ?', [$recordId]);
+        foreach ($relations as $rel) {
+            if (!is_array($rel) || empty($rel['kind']) || empty($rel['id'])) {
+                continue;
+            }
+            Database::run(
+                'INSERT INTO record_relations (record_id, kind, related_id) VALUES (?, ?, ?)',
+                [$recordId, (string) $rel['kind'], (string) $rel['id']],
+            );
+        }
+    }
+
+    private static function addActivity(string $orgId, string $actorId, string $title, string $parentType, string $parentId): void
+    {
+        $id = 'ac_' . bin2hex(random_bytes(4));
+        $now = gmdate('c');
+        Database::run(
+            'INSERT INTO records (id, org_id, type, title, fields_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [
+                $id,
+                $orgId,
+                'activity',
+                $title,
+                json_encode(['actorId' => $actorId, 'verb' => 'updated'], JSON_UNESCAPED_UNICODE),
+                $now,
+                $now,
+            ],
+        );
+        Database::run(
+            'INSERT INTO record_relations (record_id, kind, related_id) VALUES (?, ?, ?)',
+            [$id, $parentType, $parentId],
+        );
+    }
+
+    /** @param array<string, mixed> $before */
+    /** @param array<string, mixed> $after */
+    private static function changeNote(string $type, array $before, array $after, string $oldTitle, string $newTitle): ?string
+    {
+        if (($before['stage'] ?? null) !== ($after['stage'] ?? null) && isset($after['stage'])) {
+            return 'moved to ' . (string) $after['stage'];
+        }
+        if (($before['status'] ?? null) !== ($after['status'] ?? null) && isset($after['status'])) {
+            return 'status → ' . (string) $after['status'];
+        }
+        if ($oldTitle !== $newTitle) {
+            return null;
+        }
+        if ($type === 'deal' && (float) ($before['amount'] ?? 0) !== (float) ($after['amount'] ?? 0)) {
+            return 'updated amount';
+        }
+        return null;
     }
 }

@@ -12,7 +12,9 @@ export function CrmLayout() {
   const views = useModuleViews('crm')
   const activeId = useKernel((s) => s.activeViews.crm)
   const setActiveView = useKernel((s) => s.setActiveView)
+  const setCreateType = useKernel((s) => s.setCreateType)
   const view = views.find((item) => item.id === activeId) ?? views[0]
+  const createType = (view?.objectType as 'deal' | 'company' | 'contact' | undefined) ?? 'deal'
   const tabs = [
     { to: '/crm', label: t.crm.pipeline, end: true },
     { to: '/crm/companies', label: t.crm.companies },
@@ -50,7 +52,14 @@ export function CrmLayout() {
                 {tab.label}
               </NavLink>
             ))}
-        <NavLink to="/studio/views" className="ml-auto text-xs text-accent hover:underline">
+        <button
+          type="button"
+          onClick={() => setCreateType(createType)}
+          className="ml-auto rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-bg"
+        >
+          {createType === 'company' ? t.create.company : createType === 'contact' ? t.create.contact : t.create.deal}
+        </button>
+        <NavLink to="/studio/views" className="text-xs text-accent hover:underline">
           Studio
         </NavLink>
       </div>
@@ -66,6 +75,7 @@ export function CrmPipeline() {
   const members = useKernel((s) => s.members)
   const patchFields = useKernel((s) => s.patchFields)
   const openInspector = useKernel((s) => s.openInspector)
+  const setCreateType = useKernel((s) => s.setCreateType)
   const columns = DEAL_STAGES.map((stage) => ({
     id: stage,
     title: t.stages[stage],
@@ -86,6 +96,7 @@ export function CrmPipeline() {
         items={deals}
         columnOf={(item) => field(item, 'stage', 'lead')}
         onMove={(id, columnId) => patchFields(id, { stage: columnId })}
+        onAdd={(columnId) => setCreateType('deal', { fields: { stage: columnId } })}
         renderCard={(deal) => {
           const owner = members.find((m) => m.id === field(deal, 'ownerId', ''))
           return (

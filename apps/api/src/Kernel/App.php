@@ -57,15 +57,22 @@ final class App
         });
 
         $router->add('POST', '/api/records', static function (Request $req, ?array $user, array $_params) {
-            Response::json(['record' => Catalog::createRecord($user['orgId'], $req->body)], 201);
+            Response::json(['record' => Catalog::createRecord($user['orgId'], $req->body, $user['id'])], 201);
         });
 
         $router->add('PATCH', '/api/records/:id', static function (Request $req, ?array $user, array $params) {
-            $record = Catalog::updateRecord($user['orgId'], $params['id'], $req->body);
+            $record = Catalog::updateRecord($user['orgId'], $params['id'], $req->body, $user['id']);
             if ($record === null) {
                 Response::error('Not found', 404);
             }
             Response::json(['record' => $record]);
+        });
+
+        $router->add('DELETE', '/api/records/:id', static function (Request $_req, ?array $user, array $params) {
+            if (!Catalog::deleteRecord($user['orgId'], $params['id'])) {
+                Response::error('Not found', 404);
+            }
+            Response::json(['ok' => true]);
         });
 
         foreach (['layouts', 'views', 'forms'] as $table) {

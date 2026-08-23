@@ -2,8 +2,16 @@ import { Plus, Search, Sparkles } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useT } from '@/i18n'
 import { useCurrentUser, useKernel } from '@/kernel/store'
+import type { RecordType } from '@/kernel/types'
 import { Avatar, IconButton, Kbd } from '@/ui/primitives'
 import { skipNextTabSync } from './tab-bar'
+
+function createTypeFor(path: string): RecordType {
+  if (path.startsWith('/work')) return 'task'
+  if (path.startsWith('/docs')) return 'doc'
+  if (path.startsWith('/crm')) return 'deal'
+  return 'deal'
+}
 
 const titles: Record<string, string> = {
   '/': 'home',
@@ -25,7 +33,9 @@ export function Topbar() {
   const aiOpen = useKernel((s) => s.ui.aiOpen)
   const toggleAi = useKernel((s) => s.toggleAi)
   const setCommandOpen = useKernel((s) => s.setCommandOpen)
+  const setCreateType = useKernel((s) => s.setCreateType)
   const openTab = useKernel((s) => s.openTab)
+  const multitabs = useKernel((s) => s.ui.multitabs)
   const navigate = useNavigate()
   const path = '/' + location.pathname.split('/').filter(Boolean)[0]
   const key = titles[path === '/' ? '/' : path] as keyof typeof t.nav | undefined
@@ -49,18 +59,23 @@ export function Topbar() {
         <span className="flex-1">{t.search}</span>
         <Kbd>⌘K</Kbd>
       </button>
-      <div className="hidden md:block">
-        <IconButton
-          label={t.settings.newTab}
-          onClick={() => {
-            skipNextTabSync()
-            openTab('/', location.pathname)
-            navigate('/')
-          }}
-        >
-          <Plus className="size-4" />
-        </IconButton>
-      </div>
+      <IconButton label={t.create.save} onClick={() => setCreateType(createTypeFor(location.pathname))}>
+        <Plus className="size-4" />
+      </IconButton>
+      {multitabs ? (
+        <div className="hidden md:block">
+          <IconButton
+            label={t.settings.newTab}
+            onClick={() => {
+              skipNextTabSync()
+              openTab('/', location.pathname)
+              navigate('/')
+            }}
+          >
+            <Plus className="size-4" />
+          </IconButton>
+        </div>
+      ) : null}
       <IconButton label={t.ai.title} active={aiOpen} onClick={toggleAi}>
         <Sparkles className="size-4 text-ai" />
       </IconButton>

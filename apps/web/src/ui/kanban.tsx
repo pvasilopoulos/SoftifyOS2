@@ -23,12 +23,14 @@ export function Kanban({
   items,
   columnOf,
   onMove,
+  onAdd,
   renderCard,
 }: {
   columns: BoardColumn[]
   items: SoftifyRecord[]
   columnOf: (item: SoftifyRecord) => string
   onMove: (id: string, columnId: string) => void
+  onAdd?: (columnId: string) => void
   renderCard: (item: SoftifyRecord) => React.ReactNode
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
@@ -53,7 +55,7 @@ export function Kanban({
             .filter((item) => columnOf(item) === column.id)
             .sort((a, b) => Number(a.fields.sort ?? 0) - Number(b.fields.sort ?? 0))
           return (
-            <KanbanColumn key={column.id} column={column} ids={columnItems.map((item) => item.id)}>
+            <KanbanColumn key={column.id} column={column} ids={columnItems.map((item) => item.id)} onAdd={onAdd}>
               {columnItems.map((item) => (
                 <SortableCard key={item.id} id={item.id}>
                   {renderCard(item)}
@@ -70,10 +72,12 @@ export function Kanban({
 function KanbanColumn({
   column,
   ids,
+  onAdd,
   children,
 }: {
   column: BoardColumn
   ids: string[]
+  onAdd?: (columnId: string) => void
   children: React.ReactNode
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
@@ -90,7 +94,18 @@ function KanbanColumn({
           <span className="size-1.5 rounded-full" style={{ background: column.tone ?? 'var(--accent)' }} />
           <h3 className="text-xs font-semibold text-muted">{column.title}</h3>
         </div>
-        <span className="text-[11px] text-faint">{ids.length}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] text-faint">{ids.length}</span>
+          {onAdd ? (
+            <button
+              type="button"
+              onClick={() => onAdd(column.id)}
+              className="grid size-6 place-items-center rounded-md text-faint hover:bg-bg-2 hover:text-ink"
+            >
+              +
+            </button>
+          ) : null}
+        </div>
       </header>
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className="flex min-h-[120px] flex-1 flex-col gap-2 overflow-y-auto px-2 pb-3 scrollbar-thin">

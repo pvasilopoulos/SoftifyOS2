@@ -1,16 +1,19 @@
+import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
-import type { Design, SoftifyRecord } from '@/kernel/types'
+import type { Design, RecordType, SoftifyRecord } from '@/kernel/types'
 import { field } from '@/kernel/types'
 import { formatCurrency } from '@/lib/format'
 import { Kanban } from '@/ui/kanban'
 import { Badge, Surface } from '@/ui/primitives'
 
 export function ViewCanvas({ view }: { view: Design }) {
+  const t = useT()
   const records = useKernel((s) => s.records)
   const locale = useKernel((s) => s.ui.locale)
   const patchFields = useKernel((s) => s.patchFields)
   const openInspector = useKernel((s) => s.openInspector)
-  const objectType = view.objectType ?? 'deal'
+  const setCreateType = useKernel((s) => s.setCreateType)
+  const objectType = (view.objectType ?? 'deal') as RecordType
   const items = records.filter((record) => record.type === objectType)
   const kind = (view.schema.type as string) || view.kind || 'table'
   const columns = (view.schema.columns as string[] | undefined) ?? []
@@ -19,11 +22,17 @@ export function ViewCanvas({ view }: { view: Design }) {
   if (kind === 'board') {
     return (
       <div className="h-full min-h-[420px]">
+        {items.length === 0 ? (
+          <p className="px-2 py-8 text-sm text-muted">{t.empty}</p>
+        ) : null}
         <Kanban
           columns={columns.map((col) => ({ id: col, title: col.replaceAll('_', ' ') }))}
           items={items}
           columnOf={(item) => field(item, columnField, columns[0] ?? '')}
           onMove={(id, columnId) => patchFields(id, { [columnField]: columnId })}
+          onAdd={(columnId) =>
+            setCreateType(objectType, { fields: { [columnField]: columnId } })
+          }
           renderCard={(item) => (
             <Card record={item} metric={view.schema.metricField as string | undefined} locale={locale} onOpen={openInspector} />
           )}

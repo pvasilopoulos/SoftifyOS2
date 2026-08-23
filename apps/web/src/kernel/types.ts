@@ -75,12 +75,9 @@ export const DEAL_STAGES: DealStage[] = [
   'lost',
 ]
 
-export const TASK_STATUSES: TaskStatus[] = [
-  'backlog',
-  'in_progress',
-  'review',
-  'done',
-]
+export const TASK_STATUSES: TaskStatus[] = ['backlog', 'in_progress', 'review', 'done']
+
+export const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'urgent']
 
 export function field(record: SoftifyRecord, key: string, fallback: string): string
 export function field(record: SoftifyRecord, key: string, fallback: number): number

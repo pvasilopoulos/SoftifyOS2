@@ -11,6 +11,7 @@ export function WorkLayout() {
   const t = useT()
   const projects = useRecords('project')
   const tasks = useRecords('task')
+  const setCreateType = useKernel((s) => s.setCreateType)
   const links = [
     { to: '/work', title: t.work.all, color: null as string | null, meta: '', end: true },
     ...projects.map((project) => {
@@ -45,8 +46,17 @@ export function WorkLayout() {
         ))}
       </div>
       <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-line p-3 scrollbar-thin md:block">
-        <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
-          {t.work.projects}
+        <div className="mb-2 flex items-center justify-between px-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-faint">
+            {t.work.projects}
+          </div>
+          <button
+            type="button"
+            onClick={() => setCreateType('project')}
+            className="text-xs text-accent hover:underline"
+          >
+            {t.create.project}
+          </button>
         </div>
         {links.map((link) => (
           <NavLink
@@ -82,6 +92,7 @@ export function WorkBoard() {
   const members = useKernel((s) => s.members)
   const patchFields = useKernel((s) => s.patchFields)
   const openInspector = useKernel((s) => s.openInspector)
+  const setCreateType = useKernel((s) => s.setCreateType)
   const project = records.find((r) => r.id === projectId)
   const tasks = useMemo(
     () =>
@@ -107,7 +118,7 @@ export function WorkBoard() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-3 flex items-end justify-between px-1">
+      <div className="mb-3 flex items-end justify-between gap-3 px-1">
         <div>
           <h1 className="text-lg font-semibold">{project?.title ?? t.work.all}</h1>
           {project ? (
@@ -117,6 +128,18 @@ export function WorkBoard() {
             </p>
           ) : null}
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            setCreateType(
+              'task',
+              projectId ? { relations: [{ kind: 'project', id: projectId }] } : undefined,
+            )
+          }
+          className="shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-bg"
+        >
+          {t.create.task}
+        </button>
       </div>
       <div className="min-h-0 flex-1">
         <Kanban
@@ -124,6 +147,12 @@ export function WorkBoard() {
           items={tasks}
           columnOf={(item) => field(item, 'status', 'backlog')}
           onMove={(id, columnId) => patchFields(id, { status: columnId })}
+          onAdd={(columnId) =>
+            setCreateType('task', {
+              fields: { status: columnId },
+              relations: projectId ? [{ kind: 'project', id: projectId }] : [],
+            })
+          }
           renderCard={(task) => {
             const owner = members.find((m) => m.id === field(task, 'ownerId', ''))
             const priority = field(task, 'priority', 'medium')

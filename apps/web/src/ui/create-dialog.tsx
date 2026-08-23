@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
-import type { RecordType } from '@/kernel/types'
+import type { RecordType, Relation } from '@/kernel/types'
 import { cn } from '@/lib/format'
 
 const TYPE_DEFAULTS: Partial<Record<RecordType, Record<string, unknown>>> = {
-  deal: { stage: 'lead', amount: 0, probability: 10, ownerId: 'user_panos', sort: 0 },
-  task: { status: 'backlog', priority: 'medium', ownerId: 'user_panos', sort: 0 },
-  project: { status: 'planning', ownerId: 'user_panos', color: '#8aa2ff' },
+  deal: { stage: 'lead', amount: 0, probability: 10, sort: 0 },
+  task: { status: 'backlog', priority: 'medium', sort: 0 },
+  project: { status: 'planning', color: '#8aa2ff' },
   company: { industry: 'Other', city: '', health: 'ok' },
   contact: { role: '', email: '' },
   doc: { emoji: '◈', body: '' },
@@ -15,11 +16,30 @@ const TYPE_DEFAULTS: Partial<Record<RecordType, Record<string, unknown>>> = {
 
 export function CreateDialog() {
   const t = useT()
+  const location = useLocation()
   const type = useKernel((s) => s.ui.createType)
+  const prefill = useKernel((s) => s.ui.createPrefill)
   const setCreateType = useKernel((s) => s.setCreateType)
   const createRecord = useKernel((s) => s.createRecord)
+  const currentUserId = useKernel((s) => s.currentUserId)
+  const records = useKernel((s) => s.records)
   const [title, setTitle] = useState('')
   const [amount, setAmount] = useState('12000')
+  const [email, setEmail] = useState('')
+  const [companyId, setCompanyId] = useState('')
+  const pathProject = location.pathname.match(/^\/work\/([^/]+)/)?.[1] ?? ''
+  const [projectOverride, setProjectOverride] = useState<string | null>(null)
+  const projectId = projectOverride ?? pathProject
+
+  useEffect(() => {
+    if (!type) {
+      setTitle('')
+      setEmail('')
+      setAmount('12000')
+      setCompanyId('')
+      setProjectOverride(null)
+    }
+  }, [type])
 
   if (!type) return null
 
@@ -31,14 +51,32 @@ export function CreateDialog() {
     doc: t.create.doc,
     project: t.create.project,
   }
+  const companies = records.filter((item) => item.type === 'company')
+  const projects = records.filter((item) => item.type === 'project')
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!type || !title.trim()) return
-    const fields = { ...(TYPE_DEFAULTS[type] ?? {}) }
+    const fields: Record<string, unknown> = {
+      ...(TYPE_DEFAULTS[type] ?? {}),
+      ownerId: currentUserId,
+      ...(prefill?.fields ?? {}),
+    }
     if (type === 'deal') fields.amount = Number(amount) || 0
-    createRecord({ type, title: title.trim(), fields })
+    if (type === 'contact' && email) fields.email = email
+    const relations: Relation[] = [...(prefill?.relations ?? [])]
+    const workProject = projectId
+    if ((type === 'deal' || type === 'contact') && companyId) {
+      relations.push({ kind: 'company', id: companyId })
+    }
+    if (type === 'task' && workProject) {
+      relations.push({ kind: 'project', id: workProject })
+    }
+    createRecord({ type, title: title.trim(), fields, relations })
     setTitle('')
+    setEmail('')
+    setAmount('12000')
+    setCompanyId('')
   }
 
   return (
@@ -70,6 +108,50 @@ export function CreateDialog() {
               inputMode="numeric"
               className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
             />
+          </label>
+        ) : null}
+        {type === 'contact' ? (
+          <label className="mt-3 block text-xs font-medium text-muted">
+            Email
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
+            />
+          </label>
+        ) : null}
+        {(type === 'deal' || type === 'contact') && companies.length ? (
+          <label className="mt-3 block text-xs font-medium text-muted">
+            {t.types.company}
+            <select
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
+            >
+              <option value="">{t.inspector.none}</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {type === 'task' && projects.length ? (
+          <label className="mt-3 block text-xs font-medium text-muted">
+            {t.types.project}
+            <select
+              value={projectId}
+              onChange={(e) => setProjectOverride(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
+            >
+              <option value="">{t.inspector.none}</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.title}
+                </option>
+              ))}
+            </select>
           </label>
         ) : null}
         <div className="mt-5 flex justify-end gap-2">

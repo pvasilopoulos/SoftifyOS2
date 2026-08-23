@@ -22,6 +22,11 @@ export interface WorkspaceTab {
   path: string
 }
 
+export interface CreatePrefill {
+  fields?: Record<string, unknown>
+  relations?: Relation[]
+}
+
 export interface UiState {
   theme: Theme
   locale: Locale
@@ -31,6 +36,7 @@ export interface UiState {
   aiOpen: boolean
   inspectorId: string | null
   createType: RecordType | null
+  createPrefill: CreatePrefill | null
   multitabs: boolean
 }
 
@@ -70,7 +76,7 @@ interface KernelState {
   setAiOpen: (open: boolean) => void
   toggleAi: () => void
   openInspector: (id: string | null) => void
-  setCreateType: (type: RecordType | null) => void
+  setCreateType: (type: RecordType | null, prefill?: CreatePrefill) => void
   setActiveView: (moduleId: string, viewId: string) => void
   openTab: (path: string, currentPath?: string) => void
   closeTab: (id: string) => void
@@ -82,8 +88,10 @@ interface KernelState {
     fields?: Record<string, unknown>
     relations?: Relation[]
   }) => SoftifyRecord
-  updateRecord: (id: string, patch: Partial<Pick<SoftifyRecord, 'title' | 'fields'>>) => void
+  updateRecord: (id: string, patch: Partial<Pick<SoftifyRecord, 'title' | 'fields' | 'relations'>>) => void
   patchFields: (id: string, fields: Record<string, unknown>) => void
+  setRelations: (id: string, relations: Relation[]) => void
+  deleteRecord: (id: string) => void
   saveDesign: (table: 'layouts' | 'views' | 'forms', item: Partial<Design> & { schema: Record<string, unknown> }) => Promise<Design>
   deleteDesign: (table: 'layouts' | 'views' | 'forms', id: string) => Promise<void>
   resetDemo: () => void
@@ -91,6 +99,30 @@ interface KernelState {
 
 function newTab(path: string): WorkspaceTab {
   return { id: uid('tab'), path }
+}
+
+const persistTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function schedulePersist(get: () => KernelState, id: string) {
+  const previous = persistTimers.get(id)
+  if (previous) clearTimeout(previous)
+  persistTimers.set(
+    id,
+    setTimeout(() => {
+      persistTimers.delete(id)
+      if (!getToken()) return
+      const record = get().records.find((row) => row.id === id)
+      if (!record || record.type === 'activity') return
+      void api(`/api/records/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: record.title,
+          fields: record.fields,
+          relations: record.relations,
+        }),
+      }).catch(() => undefined)
+    }, 280),
+  )
 }
 
 const firstTab = newTab('/')
@@ -104,6 +136,7 @@ const defaultUi: UiState = {
   aiOpen: false,
   inspectorId: null,
   createType: null,
+  createPrefill: null,
   multitabs: false,
 }
 
@@ -155,7 +188,7 @@ export const useKernel = create<KernelState>()(
             hydrating: false,
             tabs: [tab],
             activeTabId: tab.id,
-            ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
+            ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null, createPrefill: null },
           }))
           return true
         } catch {
@@ -170,7 +203,7 @@ export const useKernel = create<KernelState>()(
             hydrating: false,
             tabs: [tab],
             activeTabId: tab.id,
-            ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
+            ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null, createPrefill: null },
           }))
           return true
         }
@@ -182,7 +215,7 @@ export const useKernel = create<KernelState>()(
         set((s) => ({
           authenticated: false,
           hydrating: false,
-          ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null },
+          ui: { ...s.ui, booted: false, commandOpen: false, inspectorId: null, createType: null, createPrefill: null },
         }))
       },
       hydrate: async () => {
@@ -219,7 +252,8 @@ export const useKernel = create<KernelState>()(
       setAiOpen: (aiOpen) => set((s) => ({ ui: { ...s.ui, aiOpen } })),
       toggleAi: () => set((s) => ({ ui: { ...s.ui, aiOpen: !s.ui.aiOpen } })),
       openInspector: (inspectorId) => set((s) => ({ ui: { ...s.ui, inspectorId } })),
-      setCreateType: (createType) => set((s) => ({ ui: { ...s.ui, createType } })),
+      setCreateType: (createType, createPrefill) =>
+        set((s) => ({ ui: { ...s.ui, createType, createPrefill: createType ? createPrefill ?? null : null } })),
       setActiveView: (moduleId, viewId) =>
         set((s) => ({ activeViews: { ...s.activeViews, [moduleId]: viewId } })),
       openTab: (path, currentPath) => {
@@ -263,19 +297,21 @@ export const useKernel = create<KernelState>()(
         }
         set((s) => ({
           records: [record, ...s.records],
-          ui: { ...s.ui, createType: null, inspectorId: record.id },
+          ui: { ...s.ui, createType: null, createPrefill: null, inspectorId: record.id },
         }))
-        void api<{ record: SoftifyRecord }>('/api/records', {
-          method: 'POST',
-          body: JSON.stringify(record),
-        })
-          .then((data) =>
-            set((s) => ({
-              records: s.records.map((item) => (item.id === record.id ? data.record : item)),
-              ui: { ...s.ui, inspectorId: data.record.id },
-            })),
-          )
-          .catch(() => undefined)
+        if (getToken()) {
+          void api<{ record: SoftifyRecord }>('/api/records', {
+            method: 'POST',
+            body: JSON.stringify(record),
+          })
+            .then((data) =>
+              set((s) => ({
+                records: s.records.map((item) => (item.id === record.id ? data.record : item)),
+                ui: { ...s.ui, inspectorId: data.record.id },
+              })),
+            )
+            .catch(() => undefined)
+        }
         return record
       },
       updateRecord: (id, patch) => {
@@ -286,18 +322,25 @@ export const useKernel = create<KernelState>()(
                   ...record,
                   ...patch,
                   fields: patch.fields ? { ...record.fields, ...patch.fields } : record.fields,
+                  relations: patch.relations ?? record.relations,
                   updatedAt: new Date().toISOString(),
                 }
               : record,
           ),
         }))
-        const current = get().records.find((record) => record.id === id)
-        void api(`/api/records/${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ title: current?.title, fields: patch.fields ?? current?.fields }),
-        }).catch(() => undefined)
+        schedulePersist(get, id)
       },
       patchFields: (id, fields) => get().updateRecord(id, { fields }),
+      setRelations: (id, relations) => get().updateRecord(id, { relations }),
+      deleteRecord: (id) => {
+        set((s) => ({
+          records: s.records.filter((record) => record.id !== id),
+          ui: { ...s.ui, inspectorId: s.ui.inspectorId === id ? null : s.ui.inspectorId },
+        }))
+        if (getToken()) {
+          void api(`/api/records/${id}`, { method: 'DELETE' }).catch(() => undefined)
+        }
+      },
       saveDesign: async (table, item) => {
         const path = item.id ? `/api/${table}/${item.id}` : `/api/${table}`
         const data = await api<{ item: Design }>(path, {
@@ -347,6 +390,7 @@ export const useKernel = create<KernelState>()(
             commandOpen: false,
             inspectorId: null,
             createType: null,
+            createPrefill: null,
             aiOpen: false,
           },
         }
