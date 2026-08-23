@@ -58,8 +58,8 @@ export function Inspector() {
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col border-line bg-bg-1 shadow-[var(--shadow)] md:absolute md:inset-y-0 md:right-0 md:bottom-auto md:top-auto md:z-20 md:w-[420px] md:max-w-full md:border-l">
-      <header className="flex items-start gap-3 border-b border-line px-4 py-3">
+    <div className="fixed inset-x-0 top-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col border-line bg-bg-1 shadow-[var(--shadow)] md:absolute md:inset-y-0 md:right-0 md:bottom-auto md:top-auto md:z-30 md:w-[420px] md:max-w-full md:border-l">
+      <header className="flex shrink-0 items-start gap-3 border-b border-line px-4 py-3">
         <div className="min-w-0 flex-1">
           <Badge tone="accent">{t.types[record.type]}</Badge>
           <input
@@ -68,21 +68,9 @@ export function Inspector() {
             className="mt-2 w-full bg-transparent text-lg font-semibold outline-none"
           />
         </div>
-        <div className="mt-1 flex items-center gap-1">
-          <button
-            type="button"
-            title={t.inspector.delete}
-            onClick={() => {
-              if (window.confirm(t.inspector.confirmDelete)) deleteRecord(record.id)
-            }}
-            className="rounded-lg p-1.5 text-muted hover:bg-danger/10 hover:text-danger"
-          >
-            <Trash2 className="size-4" />
-          </button>
-          <button type="button" onClick={() => close(null)} className="rounded-lg p-1.5 text-muted hover:text-ink">
-            <X className="size-4" />
-          </button>
-        </div>
+        <button type="button" onClick={() => close(null)} className="mt-1 rounded-lg p-1.5 text-muted hover:text-ink">
+          <X className="size-4" />
+        </button>
       </header>
       <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
         <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -358,6 +346,18 @@ export function Inspector() {
           )}
         </section>
         <p className="mt-6 text-[11px] text-faint">{formatDate(record.updatedAt, locale, true)}</p>
+      </div>
+      <div className="shrink-0 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm(t.inspector.confirmDelete)) deleteRecord(record.id)
+          }}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-danger/40 bg-danger/10 text-sm font-semibold text-danger"
+        >
+          <Trash2 className="size-4" />
+          {t.inspector.delete}
+        </button>
       </div>
     </div>
   )

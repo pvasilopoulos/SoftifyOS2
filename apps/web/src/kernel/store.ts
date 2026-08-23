@@ -251,7 +251,14 @@ export const useKernel = create<KernelState>()(
       setCommandOpen: (commandOpen) => set((s) => ({ ui: { ...s.ui, commandOpen } })),
       setAiOpen: (aiOpen) => set((s) => ({ ui: { ...s.ui, aiOpen } })),
       toggleAi: () => set((s) => ({ ui: { ...s.ui, aiOpen: !s.ui.aiOpen } })),
-      openInspector: (inspectorId) => set((s) => ({ ui: { ...s.ui, inspectorId } })),
+      openInspector: (inspectorId) =>
+        set((s) => ({
+          ui: {
+            ...s.ui,
+            inspectorId,
+            aiOpen: inspectorId ? false : s.ui.aiOpen,
+          },
+        })),
       setCreateType: (createType, createPrefill) =>
         set((s) => ({ ui: { ...s.ui, createType, createPrefill: createType ? createPrefill ?? null : null } })),
       setActiveView: (moduleId, viewId) =>
