@@ -9,6 +9,7 @@ import { skipNextTabSync } from './tab-bar'
 function createTypeFor(path: string): RecordType {
   if (path.startsWith('/work')) return 'task'
   if (path.startsWith('/docs')) return 'doc'
+  if (path.startsWith('/calendar')) return 'event'
   if (path.startsWith('/crm')) return 'deal'
   return 'deal'
 }

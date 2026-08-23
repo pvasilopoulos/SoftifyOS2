@@ -25,6 +25,7 @@ const creates: { type: RecordType; key: keyof ReturnType<typeof useT>['create'] 
   { type: 'company', key: 'company' },
   { type: 'project', key: 'project' },
   { type: 'doc', key: 'doc' },
+  { type: 'event', key: 'event' },
 ]
 
 interface PaletteItem {

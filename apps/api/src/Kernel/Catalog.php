@@ -285,7 +285,7 @@ final class Catalog
         string $parentId,
         string $preview,
     ): void {
-        if (!in_array($parentType, ['deal', 'task', 'company', 'contact', 'project'], true)) {
+        if (!in_array($parentType, ['deal', 'task', 'company', 'contact', 'project', 'event'], true)) {
             return;
         }
         $user = Database::one('SELECT name FROM users WHERE id = ?', [$actorId]);

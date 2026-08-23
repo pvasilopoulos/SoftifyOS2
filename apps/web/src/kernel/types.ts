@@ -94,5 +94,7 @@ export function relatedIds(record: SoftifyRecord, kind: RelationKind) {
 export function workspacePathForRelated(type: RecordType | undefined) {
   if (type === 'task' || type === 'project') return '/work'
   if (type === 'deal' || type === 'company' || type === 'contact') return '/crm'
+  if (type === 'event') return '/calendar'
+  if (type === 'doc') return '/docs'
   return '/inbox'
 }

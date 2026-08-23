@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useT } from '@/i18n'
 import { useKernel } from '@/kernel/store'
-import type { RecordType, Relation } from '@/kernel/types'
-import { cn } from '@/lib/format'
+import type { RecordType, Relation, RelationKind } from '@/kernel/types'
+import { cn, fromDatetimeLocal, toDatetimeLocal } from '@/lib/format'
 
 const TYPE_DEFAULTS: Partial<Record<RecordType, Record<string, unknown>>> = {
   deal: { stage: 'lead', amount: 0, probability: 10, sort: 0 },
@@ -12,11 +12,12 @@ const TYPE_DEFAULTS: Partial<Record<RecordType, Record<string, unknown>>> = {
   company: { industry: 'Other', city: '', health: 'ok' },
   contact: { role: '', email: '' },
   doc: { emoji: '◈', body: '' },
+  event: { location: '' },
 }
 
 export function CreateDialog() {
   const t = useT()
-  const location = useLocation()
+  const route = useLocation()
   const type = useKernel((s) => s.ui.createType)
   const prefill = useKernel((s) => s.ui.createPrefill)
   const setCreateType = useKernel((s) => s.setCreateType)
@@ -27,7 +28,10 @@ export function CreateDialog() {
   const [amount, setAmount] = useState('12000')
   const [email, setEmail] = useState('')
   const [companyId, setCompanyId] = useState('')
-  const pathProject = location.pathname.match(/^\/work\/([^/]+)/)?.[1] ?? ''
+  const [startLocal, setStartLocal] = useState('')
+  const [place, setPlace] = useState('')
+  const [linkedId, setLinkedId] = useState('')
+  const pathProject = route.pathname.match(/^\/work\/([^/]+)/)?.[1] ?? ''
   const [projectOverride, setProjectOverride] = useState<string | null>(null)
   const projectId = projectOverride ?? pathProject
 
@@ -38,8 +42,20 @@ export function CreateDialog() {
       setAmount('12000')
       setCompanyId('')
       setProjectOverride(null)
+      setStartLocal('')
+      setPlace('')
+      setLinkedId('')
+      return
     }
-  }, [type])
+    if (type === 'event') {
+      const raw = String(prefill?.fields?.start ?? '')
+      const start = raw ? new Date(raw) : new Date()
+      if (!raw) start.setMinutes(0, 0, 0)
+      setStartLocal(toDatetimeLocal(start.toISOString()))
+      setPlace(String(prefill?.fields?.location ?? ''))
+      setLinkedId(prefill?.relations?.[0]?.id ?? '')
+    }
+  }, [type, prefill])
 
   if (!type) return null
 
@@ -50,9 +66,13 @@ export function CreateDialog() {
     company: t.create.company,
     doc: t.create.doc,
     project: t.create.project,
+    event: t.create.event,
   }
   const companies = records.filter((item) => item.type === 'company')
   const projects = records.filter((item) => item.type === 'project')
+  const linkable = records.filter(
+    (item) => item.type === 'deal' || item.type === 'task' || item.type === 'project',
+  )
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -64,6 +84,13 @@ export function CreateDialog() {
     }
     if (type === 'deal') fields.amount = Number(amount) || 0
     if (type === 'contact' && email) fields.email = email
+    if (type === 'event') {
+      const startIso = fromDatetimeLocal(startLocal) || new Date().toISOString()
+      const startDate = new Date(startIso)
+      fields.start = startIso
+      fields.end = new Date(startDate.getTime() + 60 * 60 * 1000).toISOString()
+      fields.location = place
+    }
     const relations: Relation[] = [...(prefill?.relations ?? [])]
     const workProject = projectId
     if ((type === 'deal' || type === 'contact') && companyId) {
@@ -71,6 +98,12 @@ export function CreateDialog() {
     }
     if (type === 'task' && workProject) {
       relations.push({ kind: 'project', id: workProject })
+    }
+    if (type === 'event' && linkedId) {
+      const linked = records.find((item) => item.id === linkedId)
+      if (linked && linked.type !== 'activity' && linked.type !== 'inbox') {
+        relations.push({ kind: linked.type as RelationKind, id: linked.id })
+      }
     }
     createRecord({ type, title: title.trim(), fields, relations })
     setTitle('')
@@ -153,6 +186,44 @@ export function CreateDialog() {
               ))}
             </select>
           </label>
+        ) : null}
+        {type === 'event' ? (
+          <>
+            <label className="mt-3 block text-xs font-medium text-muted">
+              {t.inspector.start}
+              <input
+                type="datetime-local"
+                value={startLocal}
+                onChange={(e) => setStartLocal(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
+              />
+            </label>
+            <label className="mt-3 block text-xs font-medium text-muted">
+              {t.inspector.location}
+              <input
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
+              />
+            </label>
+            {linkable.length ? (
+              <label className="mt-3 block text-xs font-medium text-muted">
+                {t.inspector.related}
+                <select
+                  value={linkedId}
+                  onChange={(e) => setLinkedId(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
+                >
+                  <option value="">{t.inspector.none}</option>
+                  {linkable.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {t.types[item.type]} · {item.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </>
         ) : null}
         <div className="mt-5 flex justify-end gap-2">
           <button

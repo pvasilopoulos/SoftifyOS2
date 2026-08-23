@@ -12,7 +12,7 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from '@/kernel/types'
-import { formatDate, formatRelative } from '@/lib/format'
+import { formatDate, formatRelative, fromDatetimeLocal, toDatetimeLocal } from '@/lib/format'
 import { Badge } from '@/ui/primitives'
 
 const HEALTH = ['strong', 'ok', 'risk'] as const
@@ -268,6 +268,66 @@ export function Inspector() {
                       {company.title}
                     </option>
                   ))}
+                </select>
+              </Field>
+            </>
+          ) : null}
+          {record.type === 'event' ? (
+            <>
+              <Field label={t.inspector.start}>
+                <input
+                  type="datetime-local"
+                  value={toDatetimeLocal(field(record, 'start', record.createdAt))}
+                  onChange={(e) => {
+                    const start = fromDatetimeLocal(e.target.value)
+                    if (!start) return
+                    const prevEnd = new Date(field(record, 'end', start)).getTime()
+                    const prevStart = new Date(field(record, 'start', record.createdAt)).getTime()
+                    const delta = Number.isFinite(prevEnd - prevStart) ? prevEnd - prevStart : 60 * 60 * 1000
+                    patchFields(record.id, { start, end: new Date(new Date(start).getTime() + Math.max(delta, 15 * 60 * 1000)).toISOString() })
+                  }}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={t.inspector.end}>
+                <input
+                  type="datetime-local"
+                  value={toDatetimeLocal(field(record, 'end', field(record, 'start', record.createdAt)))}
+                  onChange={(e) => {
+                    const end = fromDatetimeLocal(e.target.value)
+                    if (end) patchFields(record.id, { end })
+                  }}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={t.inspector.location}>
+                <input
+                  value={field(record, 'location', '')}
+                  onChange={(e) => patchFields(record.id, { location: e.target.value })}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={t.inspector.related}>
+                <select
+                  value={record.relations[0]?.id ?? ''}
+                  onChange={(e) => {
+                    const next = records.find((item) => item.id === e.target.value)
+                    if (!next || next.type === 'activity' || next.type === 'inbox') {
+                      setRelations(record.id, [])
+                      return
+                    }
+                    setRelations(record.id, [{ kind: next.type as RelationKind, id: next.id }])
+                  }}
+                  className={selectClass}
+                >
+                  <option value="">{t.inspector.none}</option>
+                  {records
+                    .filter((item) => item.type === 'deal' || item.type === 'task' || item.type === 'project')
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {t.types[item.type]} · {item.title}
+                      </option>
+                    ))}
                 </select>
               </Field>
             </>

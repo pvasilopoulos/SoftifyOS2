@@ -70,11 +70,11 @@ rec($insert, $rel, 'pr_helios', 'project', 'Helios Core Portal', ['status' => 'a
 rec($insert, $rel, 'pr_nimbus', 'project', 'Nimbus Patient App', ['status' => 'active', 'ownerId' => 'user_panos', 'color' => '#5eead4'], [['company', 'co_nimbus']], $now);
 rec($insert, $rel, 'pr_internal', 'project', 'SoftifyOS studio build', ['status' => 'active', 'ownerId' => 'user_panos', 'color' => '#c4a6ff'], [], $now);
 
-rec($insert, $rel, 'tk_1', 'task', 'Map Helios SSO + role matrix', ['status' => 'in_progress', 'priority' => 'high', 'ownerId' => 'user_nikos', 'sort' => 0], [['project', 'pr_helios']], $now);
-rec($insert, $rel, 'tk_2', 'task', 'Proposal deck for Aegean ops team', ['status' => 'review', 'priority' => 'urgent', 'ownerId' => 'user_maria', 'sort' => 0], [['project', 'pr_internal']], $now);
-rec($insert, $rel, 'tk_3', 'task', 'Patient onboarding flow, v2', ['status' => 'backlog', 'priority' => 'medium', 'ownerId' => 'user_panos', 'sort' => 0], [['project', 'pr_nimbus']], $now);
-rec($insert, $rel, 'tk_4', 'task', 'Design OS command palette', ['status' => 'done', 'priority' => 'high', 'ownerId' => 'user_panos', 'sort' => 0], [['project', 'pr_internal']], $now);
-rec($insert, $rel, 'tk_5', 'task', 'Contract redlines with legal', ['status' => 'in_progress', 'priority' => 'urgent', 'ownerId' => 'user_jordan', 'sort' => 1], [['project', 'pr_helios']], $now);
+rec($insert, $rel, 'tk_1', 'task', 'Map Helios SSO + role matrix', ['status' => 'in_progress', 'priority' => 'high', 'ownerId' => 'user_nikos', 'sort' => 0, 'due' => (new DateTimeImmutable('today'))->format('Y-m-d')], [['project', 'pr_helios']], $now);
+rec($insert, $rel, 'tk_2', 'task', 'Proposal deck for Aegean ops team', ['status' => 'review', 'priority' => 'urgent', 'ownerId' => 'user_maria', 'sort' => 0, 'due' => (new DateTimeImmutable('tomorrow'))->format('Y-m-d')], [['project', 'pr_internal']], $now);
+rec($insert, $rel, 'tk_3', 'task', 'Patient onboarding flow, v2', ['status' => 'backlog', 'priority' => 'medium', 'ownerId' => 'user_panos', 'sort' => 0, 'due' => (new DateTimeImmutable('+2 days'))->format('Y-m-d')], [['project', 'pr_nimbus']], $now);
+rec($insert, $rel, 'tk_4', 'task', 'Design OS command palette', ['status' => 'done', 'priority' => 'high', 'ownerId' => 'user_panos', 'sort' => 0, 'due' => (new DateTimeImmutable('-1 day'))->format('Y-m-d')], [['project', 'pr_internal']], $now);
+rec($insert, $rel, 'tk_5', 'task', 'Contract redlines with legal', ['status' => 'in_progress', 'priority' => 'urgent', 'ownerId' => 'user_jordan', 'sort' => 1, 'due' => (new DateTimeImmutable('yesterday'))->format('Y-m-d')], [['project', 'pr_helios']], $now);
 
 rec($insert, $rel, 'doc_handbook', 'doc', 'Studio handbook', ['emoji' => '◈', 'body' => 'Helix / Softify is a product studio. If it is not in SoftifyOS, it did not happen.'], [], $now);
 rec($insert, $rel, 'doc_playbook', 'doc', 'Sales playbook', ['emoji' => '◎', 'body' => 'We sell outcomes, not hours. Demo the graph: a deal that becomes a project without export.'], [], $now);
