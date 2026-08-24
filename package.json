@@ -8,6 +8,8 @@
     "dev:api": "php -S 0.0.0.0:8080 -t apps/api/public apps/api/public/router.php",
     "db:install": "sudo mysql < apps/api/schema/install.sql && php apps/api/schema/seed.php",
     "build": "pnpm --filter web build",
+    "start": "php -S 0.0.0.0:8080 -t apps/api/public apps/api/public/router.php",
+    "prod": "pnpm build && pnpm start",
     "preview": "pnpm --filter web preview",
     "lint": "pnpm --filter web lint"
   },

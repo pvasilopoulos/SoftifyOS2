@@ -3,6 +3,8 @@ CREATE USER IF NOT EXISTS 'softify'@'localhost' IDENTIFIED BY 'softify';
 CREATE USER IF NOT EXISTS 'softify'@'127.0.0.1' IDENTIFIED BY 'softify';
 GRANT ALL PRIVILEGES ON softifyos.* TO 'softify'@'localhost';
 GRANT ALL PRIVILEGES ON softifyos.* TO 'softify'@'127.0.0.1';
+CREATE USER IF NOT EXISTS 'softify'@'%' IDENTIFIED BY 'softify';
+GRANT ALL PRIVILEGES ON softifyos.* TO 'softify'@'%';
 FLUSH PRIVILEGES;
 
 USE softifyos;
